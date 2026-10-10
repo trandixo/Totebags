@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>TRANDIXO – Handmade Tote Bags</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@500;600;700&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root{--blue:#2f78a8;--navy:#123b57;--sky:#e6f1f8;--bg:#f4f8fb;--card:#fff;--ink:#16293a;--mute:#6b7f8f;--line:#dbe6ee;--coral:#f0566a;--ok:#2e9d6b;color-scheme:light;
+box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*,*:before,*:after{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.5 'DM Sans',system-ui,sans-serif}
+h1,h2,h3,.logo{font-family:'Sora',system-ui,sans-serif;margin:0;line-height:1.2}
+button{font:inherit;cursor:pointer;border:0;color:inherit}
+a{color:inherit;text-decoration:none}
+:focus-visible{outline:3px solid var(--blue);outline-offset:2px}
+.wrap{max-width:1120px;margin:0 auto;padding:0 20px}
+header{position:sticky;top:0;z-index:20;background:var(--card);border-bottom:1px solid var(--line)}
+.bar{display:flex;align-items:center;gap:24px;height:64px}
+.logo{font-size:22px;font-weight:700;color:var(--blue);letter-spacing:.04em}
+nav{display:flex;gap:6px;margin-left:12px;flex:1}
+nav a{padding:8px 14px;border-radius:99px;color:var(--mute);font-weight:500}
+nav a.on,nav a:hover{background:var(--sky);color:var(--blue)}
+.cartbtn{position:relative;background:var(--sky);width:44px;height:44px;border-radius:50%;display:grid;place-items:center;color:var(--blue)}
+.cartbtn b{position:absolute;top:-2px;right:-2px;background:var(--coral);color:#fff;font-size:11px;min-width:18px;height:18px;border-radius:9px;display:grid;place-items:center;padding:0 4px}
+.tabs{display:none}
+.btn{background:var(--blue);color:#fff;border-radius:14px;padding:14px 24px;font-weight:700;display:inline-block;text-align:center;transition:background .15s}
+.btn:hover{background:var(--navy);color:#fff}
+.btn.ghost{background:var(--sky);color:var(--blue)}
+.btn.block{display:block;width:100%}
+.hero{background:var(--blue);color:#fff;border-radius:0 0 36px 36px}
+.hero .wrap{display:grid;grid-template-columns:1.1fr 1fr;align-items:center;gap:20px;padding-top:48px;padding-bottom:0}
+.hero h1{font-size:clamp(34px,5vw,56px);margin-bottom:14px}
+.hero p{font-size:18px;opacity:.9;max-width:440px;margin:0 0 26px}
+.hero .btn{background:#fff;color:var(--blue)}
+.hero .art{display:flex;justify-content:center;align-items:flex-end;position:relative;padding-top:20px}
+.hero .art svg{width:min(380px,90%);height:auto;margin-bottom:-24px;filter:drop-shadow(0 24px 24px rgba(0,0,0,.25))}
+.perks{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin:56px 0 8px}
+.perk{background:var(--card);border-radius:18px;padding:18px;border:1px solid var(--line)}
+.perk b{display:block;font-family:'Sora';margin-bottom:2px}
+.perk span{color:var(--mute);font-size:14px}
+section.s{padding:28px 0}
+.sh{display:flex;justify-content:space-between;align-items:end;margin-bottom:16px}
+.sh h2{font-size:26px}
+.chips{display:flex;gap:8px;overflow-x:auto;padding-bottom:6px;margin-bottom:16px}
+.chip{background:var(--card);border:1px solid var(--line);padding:8px 16px;border-radius:99px;white-space:nowrap;font-weight:500}
+.chip.on{background:var(--blue);border-color:var(--blue);color:#fff}
+.grid{display:grid;grid-template-columns:repeat(4,1fr);gap:18px}
+.pc{display:block}
+.pc .im{border-radius:20px;aspect-ratio:1/1.05;display:grid;place-items:center;transition:transform .2s}
+.pc:hover .im{transform:translateY(-4px)}
+.pc .im svg{width:78%;height:auto}
+.pc .n{margin-top:10px;color:var(--mute);font-size:14px}
+.pc .p{font-weight:700}
+.story{background:var(--sky);border-radius:28px;padding:36px;display:grid;grid-template-columns:1fr 1fr;gap:28px;margin:24px 0 48px;align-items:center}
+.story h2{font-size:28px;margin-bottom:10px}
+.story p{color:var(--mute);margin:0}
+footer{border-top:1px solid var(--line);padding:26px 0 40px;color:var(--mute);font-size:14px;text-align:center}
+/* product */
+.pd{display:grid;grid-template-columns:1fr 1fr;gap:40px;padding:32px 0 48px}
+.pd .stage{border-radius:28px;display:grid;place-items:center;min-height:460px;position:relative}
+.pd .stage svg{width:72%;height:auto;filter:drop-shadow(0 20px 18px rgba(0,0,0,.2))}
+.back{display:inline-flex;gap:6px;color:var(--mute);margin:20px 0 0;font-weight:500}
+.pd h1{font-size:34px;margin:4px 0 6px}
+.price{font-family:'Sora';font-size:30px;font-weight:700;color:var(--blue);margin:10px 0}
+.opt{margin:22px 0 8px;font-weight:700}
+.sw{display:flex;gap:10px}
+.sw button{width:34px;height:34px;border-radius:50%;border:3px solid var(--card);box-shadow:0 0 0 2px var(--line)}
+.sw button.on{box-shadow:0 0 0 2px var(--blue)}
+.sizes{display:flex;gap:10px;flex-wrap:wrap}
+.sizes button{background:var(--card);border:1px solid var(--line);padding:10px 16px;border-radius:12px;font-weight:500}
+.sizes button.on{border-color:var(--blue);background:var(--sky);color:var(--blue)}
+.qty{display:inline-flex;align-items:center;gap:12px}
+.qty button{width:36px;height:36px;border-radius:50%;border:1px solid var(--line);background:var(--card);font-size:18px}
+.buyrow{display:flex;gap:12px;margin-top:28px}
+.buyrow .btn{flex:1}
+.meta{color:var(--mute);margin:16px 0 0;padding:0;list-style:none;font-size:15px}
+.meta li{padding:4px 0}
+/* cart / checkout */
+.two{display:grid;grid-template-columns:1.4fr 1fr;gap:28px;padding:24px 0 48px;align-items:start}
+.box{background:var(--card);border:1px solid var(--line);border-radius:22px;padding:22px}
+.box h3{margin-bottom:14px;font-size:18px}
+.li{display:flex;gap:14px;align-items:center;padding:12px 0;border-bottom:1px solid var(--line)}
+.li:last-child{border:0}
+.li .th{width:64px;height:64px;border-radius:14px;display:grid;place-items:center;flex:none}
+.li .th svg{width:80%}
+.li .i{flex:1;min-width:0}
+.li .i small{color:var(--mute);display:block}
+.rm{background:none;color:var(--coral);font-size:13px;padding:0}
+.row{display:flex;justify-content:space-between;padding:6px 0}
+.row.t{font-weight:700;font-size:18px;border-top:1px solid var(--line);margin-top:8px;padding-top:12px}
+label{display:block;font-weight:500;font-size:14px;margin-bottom:12px}
+input,textarea{width:100%;margin-top:4px;padding:12px 14px;border:1px solid var(--line);border-radius:12px;background:var(--bg);color:var(--ink);font:inherit}
+.f2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.pay{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:6px}
+.pay label{flex:1;min-width:130px;margin:0;border:1px solid var(--line);border-radius:12px;padding:12px;display:flex;gap:8px;align-items:center;cursor:pointer}
+.pay input{width:auto;margin:0}
+.empty{text-align:center;padding:64px 20px;color:var(--mute)}
+.empty h2{color:var(--ink);margin-bottom:8px}
+/* orders */
+.ord{margin-bottom:16px}
+.oh{display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:8px}
+.badge{background:var(--sky);color:var(--blue);border-radius:99px;padding:3px 12px;font-size:13px;font-weight:700}
+.badge.ok{background:#dff3ea;color:var(--ok)}
+.trk{display:flex;margin:18px 0 6px}
+.trk div{flex:1;text-align:center;font-size:12px;color:var(--mute);position:relative}
+.trk div:before{content:"";display:block;width:14px;height:14px;border-radius:50%;background:var(--line);margin:0 auto 6px;position:relative;z-index:1}
+.trk div:after{content:"";position:absolute;top:6px;left:-50%;width:100%;height:2px;background:var(--line)}
+.trk div:first-child:after{display:none}
+.trk .d{color:var(--ink)}
+.trk .d:before,.trk .d:after{background:var(--blue)}
+.ok-ic{width:72px;height:72px;border-radius:50%;background:#dff3ea;color:var(--ok);display:grid;place-items:center;margin:0 auto 16px;font-size:34px}
+.toast{position:fixed;left:50%;bottom:90px;transform:translateX(-50%);background:var(--navy);color:var(--bg);padding:12px 20px;border-radius:99px;z-index:50;font-weight:500}
+@media (max-width:860px){
+ nav{display:none}.bar{justify-content:space-between}
+ .hero .wrap,.pd,.two,.story{grid-template-columns:1fr}
+ .hero .wrap{padding-top:32px;text-align:center}.hero p{margin:0 auto 22px}
+ .grid{grid-template-columns:repeat(2,1fr);gap:14px}
+ .perks{grid-template-columns:1fr}
+ .pd{gap:18px;padding-top:12px}.pd .stage{min-height:340px}
+ .story{padding:24px}
+ body{padding-bottom:76px}
+ .tabs{display:flex;position:fixed;bottom:0;left:0;right:0;background:var(--card);border-top:1px solid var(--line);z-index:30;padding:6px 8px calc(6px + env(safe-area-inset-bottom,0px))}
+ .tabs a{flex:1;text-align:center;font-size:12px;color:var(--mute);padding:6px 0;font-weight:500}
+ .tabs a.on{color:var(--blue)}.tabs svg{display:block;margin:0 auto 2px}
+ .f2{grid-template-columns:1fr}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<header><div class="wrap bar">
+ <a href="#/" class="logo">TRANDIXO</a>
+ <nav id="nav"><a href="#/" data-r="home">Home</a><a href="#/shop" data-r="shop">Shop</a><a href="#/orders" data-r="orders">My orders</a></nav>
+ <a href="#/cart" class="cartbtn" aria-label="Cart"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 4h2l2.4 11h10l2-8H6.5"/><circle cx="9" cy="20" r="1.4"/><circle cx="17" cy="20" r="1.4"/></svg><b id="cc" hidden>0</b></a>
+</div></header>
+<main id="app"></main>
+<footer><div class="wrap" id="ft"></div></footer>
+<nav class="tabs" id="tabs">
+ <a href="#/" data-r="home"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 11l9-8 9 8v9a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/></svg>Home</a>
+ <a href="#/shop" data-r="shop"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="8" width="16" height="13" rx="2"/><path d="M8 8V6a4 4 0 0 1 8 0v2"/></svg>Shop</a>
+ <a href="#/cart" data-r="cart"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 4h2l2.4 11h10l2-8H6.5"/></svg>Cart</a>
+ <a href="#/orders" data-r="orders"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 3h12v18l-3-2-3 2-3-2-3 2z"/><path d="M9 8h6M9 12h6"/></svg>Orders</a>
+</nav>
+<script>
+// ===== SUPABASE: paste your Project URL and anon public key between the quotes =====
+const SB_URL='https://ukwhqktdelanuqlbfckg.supabase.co',SB_KEY='sb_publishable_qTce_OToCZfoors1p1-xzA_4siEte5W';
+let ST={free:999,fee:60};
+let PRODUCTS=[
+ {id:1,name:'Harbour Canvas Tote',cat:'Canvas',price:799,bg:'#2f78a8',cols:['#2f78a8','#e9b45c','#8d9aa4'],desc:'Thick cotton canvas with a roomy main pocket. Our everyday carry-all.'},
+ {id:2,name:'Sunday Market Tote',cat:'Jute',price:899,bg:'#d3a77a',cols:['#c9a06d','#7c5a3a','#e8d7b8'],desc:'Natural jute with cotton-lined interior. Strong enough for a full grocery run.'},
+ {id:3,name:'Block Print Tote',cat:'Printed',price:749,bg:'#e8a08c',cols:['#e0705f','#2f78a8','#f0d8a8'],desc:'Hand block-printed on cotton by artisans. No two bags are exactly alike.'},
+ {id:4,name:'Midnight Denim Tote',cat:'Denim',price:1099,bg:'#8b8f94',cols:['#2d3a4b','#5b7fa3','#1d1d1f'],desc:'Recycled denim with reinforced straps and an inner zip pocket.'},
+ {id:5,name:'Sage Patchwork Tote',cat:'Printed',price:1199,bg:'#a7bfa5',cols:['#7f9f7c','#d9a05b','#c9d8c4'],desc:'Patchwork cotton offcuts stitched into one-of-a-kind panels.'},
+ {id:6,name:'Rosewood Everyday Tote',cat:'Canvas',price:849,bg:'#f2677a',cols:['#e0526a','#f5d0c5','#4b2f3a'],desc:'Soft-washed canvas with a magnetic closure. Light, but holds a laptop.'},
+ {id:7,name:'Coastline Jute Tote',cat:'Jute',price:999,bg:'#7fb0cf',cols:['#c9a06d','#3b6f8f','#efe3c9'],desc:'Jute body with a cotton stripe band and a wide, comfy shoulder strap.'},
+ {id:8,name:'Charcoal Studio Tote',cat:'Denim',price:1299,bg:'#9ea3a8',cols:['#3a3d42','#7a6a56','#c7c9cc'],desc:'Waxed canvas with leather-look handles. Made for work days.'}
+];
+const SIZES={S:['Small','30 × 32 cm',0],M:['Medium','38 × 40 cm',100],L:['Large','45 × 46 cm',200]};
+const $=s=>document.querySelector(s),app=$('#app');
+const inr=n=>'₹'+n.toLocaleString('en-IN');
+const ld=(k,d)=>{try{return JSON.parse(localStorage.getItem(k))||d}catch(e){return d}};
+const sv=(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}};
+let cart=ld('tx_cart',[]),orders=ld('tx_orders',[]),mem={cart:null,orders:null};
+function save(){sv('tx_cart',cart);sv('tx_orders',orders)}
+function tote(c,d){d=d||'rgba(255,255,255,.55)';
+ return `<svg viewBox="0 0 200 220" aria-hidden="true"><path d="M70 62 C70 8 130 8 130 62" fill="none" stroke="${c}" stroke-width="9" stroke-linecap="round"/><path d="M70 62 C70 14 130 14 130 62" fill="none" stroke="rgba(0,0,0,.18)" stroke-width="2" stroke-dasharray="3 4"/><path d="M28 62 H172 L184 208 Q184 214 178 214 H22 Q16 214 16 208 Z" fill="${c}"/><path d="M28 62 H172 L174 84 H26 Z" fill="rgba(0,0,0,.12)"/><rect x="62" y="116" width="76" height="62" rx="8" fill="rgba(255,255,255,.18)" stroke="${d}" stroke-width="2" stroke-dasharray="5 5"/><circle cx="100" cy="147" r="9" fill="${d}"/><path d="M26 205 H174" stroke="${d}" stroke-width="2" stroke-dasharray="5 5"/></svg>`}
+const tint=h=>{const n=parseInt((h||'#2f78a8').replace('#',''),16)||0x2f78a8,m=v=>Math.round(v*.4+153);return `rgb(${m(n>>16)},${m(n>>8&255)},${m(n&255)})`};
+const pic=(p,c)=>p.image_url?`<img src="${p.image_url}" alt="${p.name}" style="width:100%;height:100%;object-fit:cover;border-radius:inherit">`:tote(p.cols[c]||p.cols[0]);
+function toast(m){const t=document.createElement('div');t.className='toast';t.textContent=m;document.body.appendChild(t);setTimeout(()=>t.remove(),1800)}
+function badge(){const n=cart.reduce((a,i)=>a+i.q,0),b=$('#cc');b.hidden=!n;b.textContent=n}
+function card(p){return `<a class="pc" href="#/p/${p.id}"><div class="im" style="background:${p.bg}">${pic(p,0)}</div><div class="n">${p.name}</div><div class="p">${inr(p.price)}</div></a>`}
+const lineUnit=i=>i.price??(PRODUCTS.find(x=>x.id==i.id).price+SIZES[i.s][2]);
+const subtotal=()=>cart.reduce((a,i)=>a+lineUnit(i)*i.q,0);
+const ship=s=>s>=ST.free||!s?0:ST.fee;
+
+function home(){
+ const feat=PRODUCTS.slice(0,4);
+ return `<div class="hero"><div class="wrap"><div><h1>${ST.hero_title||'Handmade totes, made to be carried.'}</h1><p>${ST.hero_text||'Every bag is cut, stitched and finished by hand in small batches. Strong, simple and built for daily use.'}</p><a class="btn" href="#/shop">Shop totes</a></div><div class="art">${tote('#fff','#2f78a8')}</div></div></div>
+ <div class="wrap">
+ <div class="perks"><div class="perk"><b>Stitched by hand</b><span>Made in batches of 20 or fewer</span></div><div class="perk"><b>Free delivery</b><span>On orders above ${inr(ST.free)}</span></div><div class="perk"><b>7-day returns</b><span>If it isn't right, send it back</span></div></div>
+ <section class="s"><div class="sh"><h2>Bestsellers</h2><a href="#/shop" style="color:var(--blue);font-weight:700">See all</a></div><div class="grid">${feat.map(card).join('')}</div></section>
+ <div class="story"><div><h2>Why handmade?</h2><p>A bag that is stitched by one person holds up better and carries a little character. We use cotton canvas, jute and recycled denim, with double-stitched straps that take real weight.</p></div><div class="grid" style="grid-template-columns:repeat(2,1fr)">${PRODUCTS.slice(4,6).map(card).join('')}</div></div>
+ </div>`}
+let cat='All';
+function shop(){const cats=['All',...new Set(PRODUCTS.map(p=>p.cat))];
+ const list=PRODUCTS.filter(p=>cat=='All'||p.cat==cat);
+ return `<div class="wrap" style="padding-top:28px"><div class="sh"><h2>All tote bags</h2><span style="color:var(--mute)">${list.length} bags</span></div><div class="chips">${cats.map(c=>`<button class="chip ${c==cat?'on':''}" data-cat="${c}">${c}</button>`).join('')}</div><div class="grid" style="padding-bottom:48px">${list.map(card).join('')}</div></div>`}
+let sel={c:0,s:'M',q:1};
+function product(id){const p=PRODUCTS.find(x=>x.id==id);if(!p)return notfound();
+ return `<div class="wrap"><a class="back" href="#/shop">← Back to shop</a><div class="pd"><div class="stage" style="background:${p.bg}" id="stage">${pic(p,sel.c)}</div><div>
+ <h1>${p.name}</h1><div style="color:var(--mute)">${p.cat} · Handmade</div><div class="price" id="pp">${inr(p.price+SIZES[sel.s][2])}</div><p style="margin:0">${p.desc}</p>
+ <div class="opt">Colour</div><div class="sw">${p.cols.map((c,i)=>`<button data-c="${i}" class="${i==sel.c?'on':''}" style="background:${c}" aria-label="Colour ${i+1}"></button>`).join('')}</div>
+ <div class="opt">Size</div><div class="sizes">${Object.entries(SIZES).map(([k,v])=>`<button data-s="${k}" class="${k==sel.s?'on':''}">${v[0]} · ${v[1]}</button>`).join('')}</div>
+ <div class="opt">Quantity</div><div class="qty"><button data-q="-1" aria-label="Less">−</button><b id="qv">${sel.q}</b><button data-q="1" aria-label="More">+</button></div>
+ ${p.stock===0?`<div class="buyrow"><button class="btn ghost" disabled>Out of stock</button></div>`:`<div class="buyrow"><button class="btn ghost" data-add="${p.id}">Add to cart</button><button class="btn" data-buy="${p.id}">Buy now</button></div>`}
+ <ul class="meta"><li>✓ Cotton lining, double-stitched straps</li><li>✓ Ships in 2–4 days</li><li>✓ 7-day easy returns</li></ul></div></div></div>`}
+function cartLine(i,idx,edit){const p=PRODUCTS.find(x=>x.id==i.id)||{name:i.name||'Item',bg:'#e6f1f8',cols:['#2f78a8']};
+ return `<div class="li"><div class="th" style="background:${p.bg}">${pic(p,i.c)}</div><div class="i"><b>${p.name}</b><small>${SIZES[i.s][0]} · Qty ${i.q}</small>${edit?`<button class="rm" data-rm="${idx}">Remove</button>`:''}</div><b>${inr(lineUnit(i)*i.q)}</b></div>`}
+function summary(){const s=subtotal(),sh=ship(s);return `<div class="row"><span>Subtotal</span><span>${inr(s)}</span></div><div class="row"><span>Delivery</span><span>${sh?inr(sh):'Free'}</span></div><div class="row t"><span>Total</span><span>${inr(s+sh)}</span></div>`}
+function cartPage(){
+ if(!cart.length)return `<div class="wrap empty"><h2>Your cart is empty</h2><p>Pick a tote and it will show up here.</p><a class="btn" href="#/shop">Browse totes</a></div>`;
+ return `<div class="wrap"><div class="sh" style="margin-top:28px"><h2>Your cart</h2></div><div class="two"><div class="box">${cart.map((i,x)=>cartLine(i,x,1)).join('')}</div><div class="box"><h3>Order summary</h3>${summary()}<a class="btn block" style="margin-top:16px" href="#/checkout">Checkout</a></div></div></div>`}
+function checkout(){
+ if(!cart.length)return cartPage();
+ return `<div class="wrap"><div class="sh" style="margin-top:28px"><h2>Checkout</h2></div><div class="two"><form id="cf" class="box"><h3>Delivery details</h3>
+ <div class="f2"><label>Full name<input name="name" required autocomplete="name"></label><label>Phone<input name="phone" required pattern="[0-9]{10}" inputmode="numeric" placeholder="10-digit number" autocomplete="tel"></label></div>
+ <label>Address<textarea name="addr" rows="2" required autocomplete="street-address"></textarea></label>
+ <div class="f2"><label>City<input name="city" required></label><label>PIN code<input name="pin" required pattern="[0-9]{6}" inputmode="numeric"></label></div>
+ <h3 style="margin-top:8px">Payment</h3><div class="pay"><label><input type="radio" name="pay" value="Cash on delivery" checked> Cash on delivery</label><label><input type="radio" name="pay" value="UPI"> UPI</label><label><input type="radio" name="pay" value="Card"> Card</label></div>
+ <button class="btn block" style="margin-top:14px">Place order · ${inr(subtotal()+ship(subtotal()))}</button></form>
+ <div class="box"><h3>Your items</h3>${cart.map(i=>cartLine(i,0,0)).join('')}<div style="margin-top:8px">${summary()}</div></div></div></div>`}
+const STEPS=['Placed','Packed','Shipped','Delivered'];
+function stage(o){if(o.status)return Math.max(0,STEPS.indexOf(o.status));const h=(Date.now()-o.t)/36e5;return h>72?3:h>36?2:h>6?1:0}
+function ordersPage(o2){
+ const done=o2?`<div class="box" style="margin:28px 0;text-align:center"><div class="ok-ic">✓</div><h2>Order placed</h2><p style="color:var(--mute);margin:6px 0 0">Thanks! Order ${o2} is confirmed. You can track it below.</p></div>`:'';
+ if(!orders.length)return `<div class="wrap empty"><h2>No orders yet</h2><p>Your orders and their delivery status will appear here.</p><a class="btn" href="#/shop">Shop totes</a></div>`;
+ return `<div class="wrap">${done}<div class="sh" style="margin-top:${o2?0:28}px"><h2>My orders</h2></div><div style="padding-bottom:48px">${orders.map(o=>{const s=stage(o);return `<div class="box ord"><div class="oh"><div><b>${o.id}</b><div style="color:var(--mute);font-size:14px">${new Date(o.t).toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'numeric'})} · ${o.pay}</div></div><span class="badge ${s==3?'ok':''}">${o.status=='Cancelled'?'Cancelled':STEPS[s]}</span></div>${o.items.map(i=>cartLine(i,0,0)).join('')}<div class="trk">${STEPS.map((x,k)=>`<div class="${k<=s?'d':''}">${x}</div>`).join('')}</div><div class="row t"><span>Total</span><span>${inr(o.total)}</span></div><div style="color:var(--mute);font-size:14px">Deliver to: ${o.name}, ${o.addr}, ${o.city} ${o.pin}</div></div>`}).join('')}</div></div>`}
+function notfound(){return `<div class="wrap empty"><h2>Page not found</h2><a class="btn" href="#/">Go home</a></div>`}
+
+function route(){
+ const h=location.hash.replace(/^#\/?/,'').split('/'),r=h[0]||'home';let out;
+ if(r=='home')out=home();else if(r=='shop')out=shop();else if(r=='p')out=product(h[1]);else if(r=='cart')out=cartPage();else if(r=='checkout')out=checkout();else if(r=='orders')out=ordersPage(h[1]);else out=notfound();
+ app.innerHTML=out;window.scrollTo(0,0);badge();
+ document.querySelectorAll('[data-r]').forEach(a=>a.classList.toggle('on',a.dataset.r==(r=='p'?'shop':r=='checkout'?'cart':r)));
+}
+window.addEventListener('hashchange',()=>{sel={c:0,s:'M',q:1};route()});
+function pid(){return +location.hash.split('/')[2]}
+function addCurrent(){const id=pid(),k=cart.find(i=>i.id==id&&i.c==sel.c&&i.s==sel.s);k?k.q+=sel.q:cart.push({id,c:sel.c,s:sel.s,q:sel.q});save();badge()}
+document.addEventListener('click',e=>{
+ const t=e.target.closest('button');if(!t)return;const d=t.dataset;
+ if(d.cat){cat=d.cat;route()}
+ else if(d.c!==undefined){sel.c=+d.c;const p=PRODUCTS.find(x=>x.id==pid());$('#stage').innerHTML=pic(p,sel.c);document.querySelectorAll('.sw button').forEach((b,i)=>b.classList.toggle('on',i==sel.c))}
+ else if(d.s){sel.s=d.s;document.querySelectorAll('.sizes button').forEach(b=>b.classList.toggle('on',b.dataset.s==sel.s));const p=PRODUCTS.find(x=>x.id==pid());$('#pp').textContent=inr(p.price+SIZES[sel.s][2])}
+ else if(d.q){sel.q=Math.max(1,Math.min(10,sel.q+ +d.q));$('#qv').textContent=sel.q}
+ else if(d.add){addCurrent();toast('Added to cart')}
+ else if(d.buy){addCurrent();location.hash='#/checkout'}
+ else if(d.rm!==undefined){cart.splice(+d.rm,1);save();route()}
+});
+let sb=null;
+document.addEventListener('submit',async e=>{
+ if(e.target.id!='cf')return;e.preventDefault();const btn=e.target.querySelector('button');btn.disabled=true;
+ const f=Object.fromEntries(new FormData(e.target)),s=subtotal(),id='TDX-'+Math.floor(10000+Math.random()*90000);
+ const items=cart.map(i=>({...i,name:(PRODUCTS.find(x=>x.id==i.id)||{}).name,price:lineUnit(i)}));
+ const o={id,t:Date.now(),items,total:s+ship(s),pay:f.pay,name:f.name,addr:f.addr,city:f.city,pin:f.pin,status:'Placed'};
+ if(sb){const {error}=await sb.from('orders').insert({id,customer_name:f.name,phone:f.phone,address:f.addr,city:f.city,pin:f.pin,payment:f.pay,items,total:o.total,status:'Placed'});
+  if(error){btn.disabled=false;return toast('Order failed: '+error.message)}}
+ orders.unshift(o);cart=[];save();location.hash='#/orders/'+id;
+});
+async function boot(){
+ if(SB_URL&&SB_KEY){try{
+  sb=supabase.createClient(SB_URL,SB_KEY);
+  const [p,r]=await Promise.all([sb.from('products').select('*').eq('active',true).order('id'),sb.from('settings').select('*')]);
+  if(!p.error&&p.data)PRODUCTS=p.data.map(x=>({id:x.id,name:x.name,cat:x.category||'All',price:+x.price,desc:x.description||'',cols:(x.colors&&x.colors.length)?x.colors:['#2f78a8'],image_url:x.image_url,stock:x.stock,bg:tint((x.colors||[])[0])}));
+  Object.assign(ST,Object.fromEntries((r.data||[]).map(x=>[x.key,x.value])));
+  ST.free=+(ST.free_delivery??ST.free);ST.fee=+(ST.delivery_fee??ST.fee);
+  const ids=orders.map(o=>o.id);
+  if(ids.length){const q=await sb.rpc('order_status',{ids});if(q.data){q.data.forEach(x=>{const o=orders.find(y=>y.id==x.id);if(o)o.status=x.status});save()}}
+ }catch(e){}}
+ if(ST.primary)document.documentElement.style.setProperty('--blue',ST.primary);
+ const nm=ST.store_name||'TRANDIXO';document.title=nm+' – Handmade Tote Bags';document.querySelector('.logo').textContent=nm;
+ $('#ft').textContent='© 2026 '+nm+' · Handmade tote bags, stitched in small batches · Free delivery above '+inr(ST.free);
+ if(ST.announcement){const a=document.createElement('div');a.textContent=ST.announcement;a.style.cssText='background:var(--navy);color:#fff;text-align:center;padding:8px 12px;font-size:14px';document.body.prepend(a)}
+ cart=cart.filter(i=>PRODUCTS.some(p=>p.id==i.id));save();route();
+}
+boot();
+</script>
+</body>
+</html>
