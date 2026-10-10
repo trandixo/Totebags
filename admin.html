@@ -66,7 +66,7 @@ const $=s=>document.querySelector(s),R=$('#root');
 const inr=n=>'₹'+Number(n||0).toLocaleString('en-IN');
 const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const STAT=['Placed','Packed','Shipped','Delivered','Cancelled'];
-let sb,S={p:[],o:[],s:{},v:'dash'};
+let sb,S={p:[],o:[],s:{},r:[],v:'dash'};
 function toast(m){const t=document.createElement('div');t.className='toast';t.textContent=m;document.body.appendChild(t);setTimeout(()=>t.remove(),2000)}
 const DEF={u:'https://ukwhqktdelanuqlbfckg.supabase.co',k:'sb_publishable_qTce_OToCZfoors1p1-xzA_4siEte5W'};
 function cfg(){try{return JSON.parse(localStorage.getItem('tx_sb'))||DEF}catch(e){return DEF}}
@@ -79,15 +79,15 @@ async function logout(){await sb.auth.signOut();loginScreen()}
 
 async function init(){const c=cfg();if(!c)return cfgScreen();sb=supabase.createClient(c.u,c.k);const {data}=await sb.auth.getSession();data.session?start():loginScreen()}
 async function load(){
- const [p,o,s]=await Promise.all([sb.from('products').select('*').order('id'),sb.from('orders').select('*').order('created_at',{ascending:false}),sb.from('settings').select('*')]);
+ const [p,o,s,rv]=await Promise.all([sb.from('products').select('*').order('id'),sb.from('orders').select('*').order('created_at',{ascending:false}),sb.from('settings').select('*'),sb.from('reviews').select('*').order('created_at',{ascending:false})]);
  const er=p.error||o.error||s.error;if(er)toast(er.message);
- S.p=p.data||[];S.o=o.data||[];S.s=Object.fromEntries((s.data||[]).map(r=>[r.key,r.value]));
+ S.r=rv.data||[];S.p=p.data||[];S.o=o.data||[];S.s=Object.fromEntries((s.data||[]).map(r=>[r.key,r.value]));
 }
 async function start(){await load();draw()}
-const TABS=[['dash','Dashboard'],['prod','Products'],['ord','Orders'],['look','Appearance']];
+const TABS=[['dash','Dashboard'],['prod','Products'],['ord','Orders'],['rev','Reviews'],['look','Appearance']];
 function draw(){
  const nav=TABS.map(([k,l])=>`<button class="${S.v==k?'on':''}" onclick="S.v='${k}';draw()">${l}</button>`).join('');
- const v={dash,prod,ord,look}[S.v]();
+ const v={dash,prod,ord,rev,look}[S.v]();
  R.innerHTML=`<div class="side"><div class="logo">TRANDIXO</div>${nav}<button class="out" onclick="logout()">Log out</button></div><main>${v}</main><div class="bar">${nav}</div>`}
 
 function dash(){
@@ -106,9 +106,12 @@ function dash(){
 function prod(){return `<div class="top"><h1>Products (${S.p.length})</h1><button class="btn" onclick="pform()">Add product</button></div><div class="box tw"><table><tr><th></th><th>Name</th><th>Price</th><th>Stock</th><th>Status</th><th></th></tr>${S.p.map(p=>`<tr><td>${p.image_url?`<img class="th" src="${esc(p.image_url)}" alt="">`:`<div class="th" style="background:${esc((p.colors||[])[0]||'#2f78a8')}"></div>`}</td><td><b>${esc(p.name)}</b><br><small style="color:var(--mute)">${esc(p.category)}</small></td><td>${inr(p.price)}</td><td>${p.stock}</td><td><span class="pill ${p.active?'ok':'off'}">${p.active?'Live':'Hidden'}</span></td><td style="white-space:nowrap"><button class="btn g s" onclick="pform(${p.id})">Edit</button> <button class="btn g s" onclick="tog(${p.id})">${p.active?'Hide':'Show'}</button> <button class="btn d s" onclick="del(${p.id})">Delete</button></td></tr>`).join('')||'<tr><td colspan="6" style="color:var(--mute)">No products yet. Add your first tote.</td></tr>'}</table></div>`}
 function pform(id){const p=S.p.find(x=>x.id==id)||{active:true,colors:['#2f78a8'],category:'Canvas',stock:10};
  const m=document.createElement('div');m.className='modal';m.id='md';
- m.innerHTML=`<div class="box"><h3 style="margin-bottom:14px">${id?'Edit':'Add'} product</h3><label>Name<input id="f_n" value="${esc(p.name)}"></label><div class="f2"><label>Price (₹)<input id="f_p" type="number" min="0" value="${p.price??''}"></label><label>Stock<input id="f_s" type="number" min="0" value="${p.stock}"></label></div><div class="f2"><label>Category<input id="f_c" value="${esc(p.category)}"></label><label>Colours (hex, comma separated)<input id="f_k" value="${esc((p.colors||[]).join(','))}"></label></div><label>Image URL (optional)<input id="f_i" value="${esc(p.image_url)}"></label><label>Description<textarea id="f_d" rows="3">${esc(p.description)}</textarea></label><label><input id="f_a" type="checkbox" ${p.active?'checked':''}>Show on store</label><div style="display:flex;gap:10px;justify-content:flex-end"><button class="btn g" onclick="$('#md').remove()">Cancel</button><button class="btn" onclick="psave(${id||0})">Save</button></div></div>`;document.body.appendChild(m)}
+ m.innerHTML=`<div class="box"><h3 style="margin-bottom:14px">${id?'Edit':'Add'} product</h3><label>Name<input id="f_n" value="${esc(p.name)}"></label><div class="f2"><label>Price (₹)<input id="f_p" type="number" min="0" value="${p.price??''}"></label><label>Stock<input id="f_s" type="number" min="0" value="${p.stock}"></label></div><div class="f2"><label>Category<input id="f_c" value="${esc(p.category)}"></label><label>Colours (hex, comma separated)<input id="f_k" value="${esc((p.colors||[]).join(','))}"></label></div><label>Product picture<input id="f_f" type="file" accept="image/*"></label><input id="f_i" type="hidden" value="${esc(p.image_url)}">${p.image_url?`<div style="margin:-4px 0 12px"><img src="${esc(p.image_url)}" alt="" style="height:80px;border-radius:10px;vertical-align:middle"> <small style="color:var(--mute)">Choose a new file to replace it</small></div>`:''}<label>Description<textarea id="f_d" rows="3">${esc(p.description)}</textarea></label><label><input id="f_a" type="checkbox" ${p.active?'checked':''}>Show on store</label><div style="display:flex;gap:10px;justify-content:flex-end"><button class="btn g" onclick="$('#md').remove()">Cancel</button><button class="btn" onclick="psave(${id||0})">Save</button></div></div>`;document.body.appendChild(m)}
+async function shrink(f){if(!/^image\/(jpe?g|png|webp)$/.test(f.type))return f;const b=await createImageBitmap(f),k=Math.min(1,1200/Math.max(b.width,b.height)),c=document.createElement('canvas');c.width=b.width*k;c.height=b.height*k;c.getContext('2d').drawImage(b,0,0,c.width,c.height);return new Promise(r=>c.toBlob(x=>r(x||f),f.type=='image/png'?'image/png':'image/jpeg',.85))}
 async function psave(id){
- const row={name:$('#f_n').value.trim(),price:+$('#f_p').value,stock:+$('#f_s').value,category:$('#f_c').value.trim(),colors:$('#f_k').value.split(',').map(s=>s.trim()).filter(Boolean),image_url:$('#f_i').value.trim()||null,description:$('#f_d').value,active:$('#f_a').checked};
+ let img=$('#f_i').value.trim()||null;const file=$('#f_f').files[0];
+ if(file){toast('Uploading picture...');const blob=await shrink(file),path='products/'+Date.now()+(blob.type=='image/png'?'.png':'.jpg');const u=await sb.storage.from('site').upload(path,blob,{contentType:blob.type});if(u.error)return toast(u.error.message);img=sb.storage.from('site').getPublicUrl(path).data.publicUrl}
+ const row={name:$('#f_n').value.trim(),price:+$('#f_p').value,stock:+$('#f_s').value,category:$('#f_c').value.trim(),colors:$('#f_k').value.split(',').map(s=>s.trim()).filter(Boolean),image_url:img,description:$('#f_d').value,active:$('#f_a').checked};
  if(!row.name)return toast('Name required');
  const {error}=id?await sb.from('products').update(row).eq('id',id):await sb.from('products').insert(row);
  if(error)return toast(error.message);$('#md').remove();toast('Saved');start()}
@@ -124,6 +127,8 @@ async function lsave(){
  const m={store_name:$('#s_name').value,announcement:$('#s_ann').value,hero_title:$('#s_ht').value,hero_text:$('#s_hx').value,primary:$('#s_col').value,free_delivery:+$('#s_fd').value,delivery_fee:+$('#s_df').value};
  const {error}=await sb.from('settings').upsert(Object.entries(m).map(([key,value])=>({key,value})));
  error?toast(error.message):(toast('Appearance saved'),start())}
+function rev(){return `<div class="top"><h1>Reviews (${S.r.length})</h1></div>${S.r.map(x=>{const p=S.p.find(y=>y.id==x.product_id);return `<div class="box" style="display:flex;justify-content:space-between;gap:12px"><div><b>${esc(x.name)}</b> <span style="color:#f5a623">${'★'.repeat(x.rating)}${'☆'.repeat(5-x.rating)}</span><br><small style="color:var(--mute)">${esc(p?p.name:'Deleted product')} · ${new Date(x.created_at).toLocaleDateString('en-IN')}</small><div>${esc(x.comment)}</div></div><button class="btn d s" onclick="rdel(${x.id})">Delete</button></div>`}).join('')||'<div class="box" style="color:var(--mute)">No reviews yet.</div>'}`}
+async function rdel(id){if(!confirm('Delete this review?'))return;const {error}=await sb.from('reviews').delete().eq('id',id);error?toast(error.message):(toast('Deleted'),start())}
 async function hup(){const f=$('#hi').files[0];if(!f)return toast('Choose a PNG first');if(f.size>3e6)return toast('Keep it under 3 MB');
  const path='hero-'+Date.now()+'.png',{error}=await sb.storage.from('site').upload(path,f,{contentType:f.type});if(error)return toast(error.message);
  await setHero(sb.storage.from('site').getPublicUrl(path).data.publicUrl)}
