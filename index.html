@@ -19,13 +19,18 @@ a{color:inherit;text-decoration:none}
 :focus-visible{outline:3px solid var(--blue);outline-offset:2px}
 .wrap{max-width:1120px;margin:0 auto;padding:0 20px}
 header{position:sticky;top:0;z-index:20;background:var(--card);border-bottom:1px solid var(--line)}
-.bar{display:flex;align-items:center;gap:24px;height:64px}
+.bar{display:flex;align-items:center;gap:16px;height:64px}
 .logo{font-size:22px;font-weight:700;color:var(--blue);letter-spacing:.04em}
-nav{display:flex;gap:6px;margin-left:12px;flex:1}
+nav{display:flex;gap:6px;margin-left:8px;flex:none}
 nav a{padding:8px 14px;border-radius:99px;color:var(--mute);font-weight:500}
 nav a.on,nav a:hover{background:var(--sky);color:var(--blue)}
-.cartbtn{position:relative;background:var(--sky);width:44px;height:44px;border-radius:50%;display:grid;place-items:center;color:var(--blue)}
-.cartbtn b{position:absolute;top:-2px;right:-2px;background:var(--coral);color:#fff;font-size:11px;min-width:18px;height:18px;border-radius:9px;display:grid;place-items:center;padding:0 4px}
+.icons{display:flex;gap:10px;margin-left:auto}
+.ib{position:relative;background:var(--sky);width:44px;height:44px;border-radius:50%;display:grid;place-items:center;color:var(--blue);transition:background .15s}
+.ib:hover,.ib.on{background:var(--blue);color:#fff}
+.ib b{position:absolute;top:-2px;right:-2px;background:var(--coral);color:#fff;font-size:11px;min-width:18px;height:18px;border-radius:9px;display:grid;place-items:center;padding:0 4px}
+.search{position:relative;flex:1;max-width:440px}
+.search svg{position:absolute;left:14px;top:50%;transform:translateY(-50%);color:var(--mute);pointer-events:none}
+.search input{margin:0;padding:11px 14px 11px 42px;border-radius:99px;background:var(--bg);-webkit-appearance:none;appearance:none}
 .tabs{display:none}
 .btn{background:var(--blue);color:#fff;border-radius:14px;padding:14px 24px;font-weight:700;display:inline-block;text-align:center;transition:background .15s}
 .btn:hover{background:var(--navy);color:#fff}
@@ -50,7 +55,7 @@ section.s{padding:28px 0}
 .chip{background:var(--card);border:1px solid var(--line);padding:8px 16px;border-radius:99px;white-space:nowrap;font-weight:500}
 .chip.on{background:var(--blue);border-color:var(--blue);color:#fff}
 .grid{display:grid;grid-template-columns:repeat(4,1fr);gap:18px}
-.pc{display:block}
+.pc{display:block;position:relative}.pc>a{display:block}
 .pc .im{border-radius:20px;aspect-ratio:1/1.05;display:grid;place-items:center;transition:transform .2s}
 .pc:hover .im{transform:translateY(-4px)}
 .pc .im svg{width:78%;height:auto}
@@ -59,7 +64,15 @@ section.s{padding:28px 0}
 .story{background:var(--sky);border-radius:28px;padding:36px;display:grid;grid-template-columns:1fr 1fr;gap:28px;margin:24px 0 48px;align-items:center}
 .story h2{font-size:28px;margin-bottom:10px}
 .story p{color:var(--mute);margin:0}
-footer{border-top:1px solid var(--line);padding:26px 0 40px;color:var(--mute);font-size:14px;text-align:center}
+footer{border-top:1px solid var(--line);background:var(--card);padding:36px 0 40px;color:var(--mute);font-size:15px;text-align:left}
+.ft .logo{display:inline-block;margin-bottom:14px}
+.ft-i{margin:0 0 20px;line-height:1.8}
+.ft-l a{display:block;color:var(--ink);padding:6px 0}
+.ft-l a:hover{color:var(--blue)}
+.soc{display:flex;gap:14px;margin:22px 0}
+.soc a{width:54px;height:54px;border:1px solid var(--line);border-radius:14px;display:grid;place-items:center;color:var(--mute);background:var(--card)}
+.soc a:hover{color:var(--blue);border-color:var(--blue)}
+.ft-c{border-top:1px solid var(--line);padding-top:18px;font-size:14px}
 .rt{font-size:14px;margin-top:4px}.rt span{color:#f5a623;letter-spacing:1px}.rt small{color:var(--mute)}.rt.big{font-size:16px;margin:8px 0 0}
 .share{display:flex;gap:10px;margin-top:18px}.share .btn{flex:1}
 .rv{padding:12px 0;border-top:1px solid var(--line)}.rv small{color:var(--mute)}
@@ -126,6 +139,18 @@ input,textarea{width:100%;margin-top:4px;padding:12px 14px;border:1px solid var(
 .stat{background:var(--sky);border-radius:16px;padding:14px;text-align:center}
 .stat b{display:block;font:700 20px 'Sora',sans-serif;color:var(--blue)}
 .stat span{font-size:13px;color:var(--mute)}
+/* wishlist + pages */
+.wbtn{position:absolute;top:10px;right:10px;z-index:2;width:38px;height:38px;border-radius:50%;background:rgba(255,255,255,.92);display:grid;place-items:center;color:var(--ink);box-shadow:0 2px 8px rgba(0,0,0,.12)}
+[data-wish] svg{fill:none}
+[data-wish].on svg{fill:currentColor}
+.wbtn.on,.btn.lbl.on{color:var(--coral)}
+.lbl svg{vertical-align:-4px;margin-right:6px}
+.doc{max-width:760px;margin:28px auto 56px;padding:28px}
+.doc h2{font-size:28px;margin-bottom:14px}
+.doc h3{font-size:17px;margin:22px 0 6px}
+.doc p,.doc li{color:var(--mute);margin:0 0 8px}
+.doc ul{padding-left:20px;margin:0}
+.doc .row{gap:16px}
 .toast{position:fixed;left:50%;bottom:90px;transform:translateX(-50%);background:var(--navy);color:var(--bg);padding:12px 20px;border-radius:99px;z-index:50;font-weight:500}
 @media (max-width:860px){
  nav{display:none}.bar{justify-content:space-between}
@@ -140,6 +165,9 @@ input,textarea{width:100%;margin-top:4px;padding:12px 14px;border:1px solid var(
  .tabs a{flex:1;text-align:center;font-size:12px;color:var(--mute);padding:6px 0;font-weight:500}
  .tabs a.on{color:var(--blue)}.tabs svg{display:block;margin:0 auto 2px}
  .f2{grid-template-columns:1fr}
+ .bar{flex-wrap:wrap;height:auto;padding-top:10px;padding-bottom:10px;gap:10px}
+ .search{order:3;flex:1 1 100%;max-width:none}
+ .doc{padding:20px;margin-top:18px}
 }
 @media (prefers-reduced-motion:reduce){*{transition:none!important}}
 </style>
@@ -147,8 +175,13 @@ input,textarea{width:100%;margin-top:4px;padding:12px 14px;border:1px solid var(
 <body>
 <header><div class="wrap bar">
  <a href="#/" class="logo">TRANDIXO</a>
- <nav id="nav"><a href="#/" data-r="home">Home</a><a href="#/shop" data-r="shop">Shop</a><a href="#/orders" data-r="orders">My orders</a><a href="#/profile" data-r="profile">Profile</a></nav>
- <a href="#/cart" class="cartbtn" aria-label="Cart"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 4h2l2.4 11h10l2-8H6.5"/><circle cx="9" cy="20" r="1.4"/><circle cx="17" cy="20" r="1.4"/></svg><b id="cc" hidden>0</b></a>
+ <nav id="nav"><a href="#/" data-r="home">Home</a><a href="#/shop" data-r="shop">Shop</a><a href="#/orders" data-r="orders">My orders</a></nav>
+ <form id="sf" class="search" role="search" autocomplete="off"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg><input id="sq" type="search" placeholder="Search tote bags" aria-label="Search tote bags" enterkeyhint="search"></form>
+ <div class="icons">
+  <a href="#/wishlist" class="ib" data-r="wishlist" aria-label="Wishlist"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"><path d="M12 21s-8-5.2-8-11a4.6 4.6 0 0 1 8-3 4.6 4.6 0 0 1 8 3c0 5.8-8 11-8 11z"/></svg><b id="wc" hidden>0</b></a>
+  <a href="#/cart" class="ib" data-r="cart" aria-label="Cart"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 4h2l2.4 11h10l2-8H6.5"/><circle cx="9" cy="20" r="1.4"/><circle cx="17" cy="20" r="1.4"/></svg><b id="cc" hidden>0</b></a>
+  <a href="#/profile" class="ib" data-r="profile" aria-label="Profile"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-7 8-7s8 3 8 7"/></svg></a>
+ </div>
 </div></header>
 <main id="app"></main>
 <footer><div class="wrap" id="ft"></div></footer>
@@ -180,6 +213,13 @@ const ld=(k,d)=>{try{return JSON.parse(localStorage.getItem(k))||d}catch(e){retu
 const sv=(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}};
 let cart=ld('tx_cart',[]),orders=ld('tx_orders',[]),mem={cart:null,orders:null};
 let prof=ld('tx_profile',{});
+let wish=ld('tx_wish',[]);
+// ===== STORE INFO: edit these (or add the same keys in your Supabase settings table: address, hours, phone, email, instagram, facebook) =====
+const SHOP={address:'Add your store address here, City, State – PIN',hours:'Mon–Sat, 10:00 AM – 7:00 PM',phone:'+91 XXXXX XXXXX',email:'support@yourdomain.com',instagram:'https://instagram.com/',facebook:'https://facebook.com/'};
+const info=k=>String(ST[k]||SHOP[k]||'');
+const waLink=()=>{const d=info('phone').replace(/\D/g,'');return d.length>=10?'https://wa.me/'+(d.length==10?'91'+d:d):''};
+const dq=s=>{try{return decodeURIComponent(s||'')}catch(e){return s||''}};
+const HEART='<svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" aria-hidden="true"><path d="M12 21s-8-5.2-8-11a4.6 4.6 0 0 1 8-3 4.6 4.6 0 0 1 8 3c0 5.8-8 11-8 11z"/></svg>';
 function save(){sv('tx_cart',cart);sv('tx_orders',orders)}
 function tote(c,d){d=d||'rgba(255,255,255,.55)';
  return `<svg viewBox="0 0 200 220" aria-hidden="true"><path d="M70 62 C70 8 130 8 130 62" fill="none" stroke="${c}" stroke-width="9" stroke-linecap="round"/><path d="M70 62 C70 14 130 14 130 62" fill="none" stroke="rgba(0,0,0,.18)" stroke-width="2" stroke-dasharray="3 4"/><path d="M28 62 H172 L184 208 Q184 214 178 214 H22 Q16 214 16 208 Z" fill="${c}"/><path d="M28 62 H172 L174 84 H26 Z" fill="rgba(0,0,0,.12)"/><rect x="62" y="116" width="76" height="62" rx="8" fill="rgba(255,255,255,.18)" stroke="${d}" stroke-width="2" stroke-dasharray="5 5"/><circle cx="100" cy="147" r="9" fill="${d}"/><path d="M26 205 H174" stroke="${d}" stroke-width="2" stroke-dasharray="5 5"/></svg>`}
@@ -193,8 +233,8 @@ const shareUrl=()=>location.href.split('#')[0]+'#/p/'+location.hash.split('/')[2
 function revBox(p){const r=REV.filter(x=>x.product_id==p.id);
  return `<div class="box" style="margin-bottom:48px"><h3 style="margin-bottom:6px">Ratings and reviews</h3>${r.map(x=>`<div class="rv"><b>${esc(x.name)}</b> <span class="rt"><span>${stars(x.rating)}</span></span><div>${esc(x.comment)}</div><small>${new Date(x.created_at).toLocaleDateString('en-IN')}</small></div>`).join('')||'<p style="color:var(--mute);margin:0">Be the first to review this bag.</p>'}${sb?`<form id="rf" style="margin-top:18px"><h3 style="margin-bottom:8px">Write a review</h3><div class="pick" id="pk">${[1,2,3,4,5].map(n=>`<button type="button" data-star="${n}" aria-label="${n} stars">★</button>`).join('')}</div><label>Your name<input name="name" required value="${esc(prof.name)}"></label><label>Review<textarea name="comment" rows="2"></textarea></label><button class="btn">Submit review</button></form>`:''}</div>`}
 function toast(m){const t=document.createElement('div');t.className='toast';t.textContent=m;document.body.appendChild(t);setTimeout(()=>t.remove(),1800)}
-function badge(){const n=cart.reduce((a,i)=>a+i.q,0),b=$('#cc');b.hidden=!n;b.textContent=n}
-function card(p){return `<a class="pc" href="#/p/${p.id}"><div class="im" style="background:${p.bg}">${pic(p,0)}</div><div class="n">${p.name}</div>${rt(p.id)}<div class="p">${inr(p.price)}</div></a>`}
+function badge(){const n=cart.reduce((a,i)=>a+i.q,0),b=$('#cc'),w=$('#wc');b.hidden=!n;b.textContent=n;w.hidden=!wish.length;w.textContent=wish.length}
+function card(p){return `<div class="pc"><button class="wbtn${wish.includes(p.id)?' on':''}" data-wish="${p.id}" aria-label="Save to wishlist">${HEART}</button><a href="#/p/${p.id}"><div class="im" style="background:${p.bg}">${pic(p,0)}</div><div class="n">${p.name}</div>${rt(p.id)}<div class="p">${inr(p.price)}</div></a></div>`}
 const lineUnit=i=>i.price??(PRODUCTS.find(x=>x.id==i.id).price+SIZES[i.s][2]);
 const subtotal=()=>cart.reduce((a,i)=>a+lineUnit(i)*i.q,0);
 const ship=s=>s>=ST.free||!s?0:ST.fee;
@@ -219,7 +259,7 @@ function product(id){const p=PRODUCTS.find(x=>x.id==id);if(!p)return notfound();
  <div class="opt">Size</div><div class="sizes">${Object.entries(SIZES).map(([k,v])=>`<button data-s="${k}" class="${k==sel.s?'on':''}">${v[0]} · ${v[1]}</button>`).join('')}</div>
  <div class="opt">Quantity</div><div class="qty"><button data-q="-1" aria-label="Less">−</button><b id="qv">${sel.q}</b><button data-q="1" aria-label="More">+</button></div>
  ${p.stock===0?`<div class="buyrow"><button class="btn ghost" disabled>Out of stock</button></div>`:`<div class="buyrow"><button class="btn ghost" data-add="${p.id}">Add to cart</button><button class="btn" data-buy="${p.id}">Buy now</button></div>`}
- <ul class="meta"><li>✓ Cotton lining, double-stitched straps</li><li>✓ Ships in 2–4 days</li><li>✓ 7-day easy returns</li></ul><div class="share"><button class="btn ghost" data-share="1">Share link</button><button class="btn ghost" data-wa="1">WhatsApp</button></div></div></div>${revBox(p)}</div>`}
+ <ul class="meta"><li>✓ Cotton lining, double-stitched straps</li><li>✓ Ships in 2–4 days</li><li>✓ 7-day easy returns</li></ul><div class="share"><button class="btn ghost" data-share="1">Share link</button><button class="btn ghost" data-wa="1">WhatsApp</button><button class="btn ghost lbl${wish.includes(p.id)?' on':''}" data-wish="${p.id}">${HEART}<span class="wt">${wish.includes(p.id)?'Saved':'Save'}</span></button></div></div></div>${revBox(p)}</div>`}
 function cartLine(i,idx,edit){const p=PRODUCTS.find(x=>x.id==i.id)||{name:i.name||'Item',bg:'#e6f1f8',cols:['#2f78a8']};
  return `<div class="li"><div class="th" style="background:${p.bg}">${pic(p,i.c)}</div><div class="i"><b>${p.name}</b><small>${SIZES[i.s][0]} · Qty ${i.q}</small>${edit?`<button class="rm" data-rm="${idx}">Remove</button>`:''}</div><b>${inr(lineUnit(i)*i.q)}</b></div>`}
 function summary(){const s=subtotal(),sh=ship(s);return `<div class="row"><span>Subtotal</span><span>${inr(s)}</span></div><div class="row"><span>Delivery</span><span>${sh?inr(sh):'Free'}</span></div><div class="row t"><span>Total</span><span>${inr(s+sh)}</span></div>`}
@@ -256,12 +296,36 @@ function profilePage(){
  <a class="btn ghost block" href="#/orders">View my orders</a>
  <button class="btn ghost block" style="margin-top:10px;color:var(--coral)" data-clr="1">Clear saved details</button></div>
  </div></div>`}
+function wishPage(){const l=PRODUCTS.filter(p=>wish.includes(p.id));
+ if(!l.length)return `<div class="wrap empty"><h2>Your wishlist is empty</h2><p>Tap the heart on any bag to save it here.</p><a class="btn" href="#/shop">Browse totes</a></div>`;
+ return `<div class="wrap" style="padding-top:28px"><div class="sh"><h2>My wishlist</h2><span style="color:var(--mute)">${l.length} saved</span></div><div class="grid" style="padding-bottom:48px">${l.map(card).join('')}</div></div>`}
+function searchPage(q){const ws=q.toLowerCase().split(/\s+/).filter(Boolean),l=PRODUCTS.filter(p=>{const h=(p.name+' '+p.cat+' '+p.desc).toLowerCase();return ws.every(w=>h.includes(w))});
+ return `<div class="wrap" style="padding-top:28px"><div class="sh"><h2>Results for “${esc(q)}”</h2><span style="color:var(--mute)">${l.length} found</span></div>${l.length?`<div class="grid" style="padding-bottom:48px">${l.map(card).join('')}</div>`:`<div class="empty"><h2>No bags found</h2><p>Try a different word, like canvas, jute or denim.</p><a class="btn" href="#/shop">Browse all totes</a></div>`}</div>`}
+function trackPage(){return `<div class="wrap"><div class="doc box"><h2>Track your order</h2><p>Enter the order ID you got after checkout, for example TDX-12345.</p><form id="tf"><label>Order ID<input name="oid" required placeholder="TDX-12345" value="${esc(orders[0]?orders[0].id:'')}"></label><button class="btn block">Track order</button></form><div id="tres" style="margin-top:16px"></div></div></div>`}
+const PAGES=Object.assign(Object.create(null),{
+ about:['About us',()=>`<p>TRANDIXO makes handmade tote bags. Every bag is cut, stitched and finished by hand in small batches of 20 or fewer.</p><h3>What we use</h3><p>Cotton canvas, natural jute and recycled denim, with cotton lining and double-stitched straps that carry real weight.</p><h3>Why small batches</h3><p>A bag stitched by one person holds up better and carries a little character, so no two bags are exactly alike.</p><p style="margin-top:16px"><a class="btn" href="#/shop">Shop totes</a></p>`],
+ shipping:['Shipping policy',()=>`<h3>Dispatch</h3><p>Orders are packed and shipped within 2–4 days.</p><h3>Delivery charges</h3><p>Delivery is free on orders of ${inr(ST.free)} and above. Below that, a flat delivery fee of ${inr(ST.fee)} applies.</p><h3>Payment options</h3><p>Cash on delivery, UPI and card.</p><h3>Tracking</h3><p>Use the <a href="#/track" style="color:var(--blue)">Track Your Order</a> page with your order ID to see whether your order is Placed, Packed, Shipped or Delivered. Orders placed on this device are also listed under My orders.</p><h3>Delivery details</h3><p>Please check your address, PIN code and phone number at checkout. Once a parcel has shipped we can't change the address.</p>`],
+ returns:['Return & refund policy',()=>`<h3>7-day returns</h3><p>If your bag isn't right, you can send it back within 7 days of delivery.</p><h3>Conditions</h3><ul><li>The bag must be unused, unwashed and in its original condition.</li><li>Handmade bags can vary slightly in stitching, print and shade. This is part of the product and not a defect.</li></ul><h3>How to return</h3><p>Contact us from the <a href="#/contact" style="color:var(--blue)">Contact / Support</a> page with your order ID and a photo. We'll confirm the return and share the pickup or shipping details.</p><h3>Refunds</h3><p>Once we receive and check the bag, the refund goes to your original payment method. For cash on delivery orders we refund by UPI or bank transfer.</p><h3>Cancellations</h3><p>You can cancel an order before it ships by contacting us with your order ID.</p>`],
+ privacy:['Privacy policy',()=>`<h3>What we collect</h3><p>Your name, phone number, delivery address, the items you order, and any review you write.</p><h3>How we use it</h3><p>To deliver your order, update you about it, handle returns and support, and show reviews on product pages.</p><h3>Where it is stored</h3><p>Orders and reviews are stored with our database provider. Your cart, wishlist and saved profile details stay in your own browser, and you can clear them any time from the Profile page.</p><h3>Payments</h3><p>We don't store card numbers on this site.</p><h3>Sharing</h3><p>We don't sell your data. We share your name, phone and address only with the courier that delivers your order.</p><h3>Questions or deletion requests</h3><p>Reach us through the <a href="#/contact" style="color:var(--blue)">Contact / Support</a> page.</p>`],
+ terms:['Terms & conditions',()=>`<h3>Using this site</h3><p>By placing an order you agree to these terms.</p><h3>Products and prices</h3><p>All prices are in Indian rupees (₹). Bags are handmade, so small differences in size, stitching, print and colour are normal. Colours may also look slightly different on your screen.</p><h3>Orders</h3><p>An order is confirmed when you receive an order ID. We may cancel an order if an item is out of stock or the details are incomplete. In that case we'll let you know and refund any payment made.</p><h3>Delivery, returns and refunds</h3><p>See our <a href="#/shipping" style="color:var(--blue)">Shipping Policy</a> and <a href="#/returns" style="color:var(--blue)">Return &amp; Refund Policy</a>.</p><h3>Reviews</h3><p>Reviews must be honest and respectful. We may remove reviews that are abusive or unrelated to the product.</p><h3>Changes</h3><p>We may update these terms from time to time. The version on this page is the one that applies.</p>`],
+ contact:['Contact / Support',()=>{const wa=waLink();return `<p>Questions about an order, a return or a bag? We're happy to help. Please keep your order ID handy.</p><div class="box" style="margin:16px 0"><div class="row"><span>Phone</span><b>${esc(info('phone'))}</b></div><div class="row"><span>Email</span><b>${esc(info('email'))}</b></div><div class="row"><span>Address</span><b style="text-align:right">${esc(info('address'))}</b></div><div class="row"><span>Hours</span><b>${esc(info('hours'))}</b></div></div><div class="share"><a class="btn" href="mailto:${esc(info('email'))}">Email us</a>${wa?`<a class="btn ghost" href="${wa}" target="_blank" rel="noopener">WhatsApp</a>`:''}</div>`}]
+});
+const pageView=r=>`<div class="wrap"><div class="doc box"><h2>${PAGES[r][0].replace(/&/g,'&amp;')}</h2>${PAGES[r][1]()}</div></div>`;
+function footerHTML(nm){
+ const wa=waLink(),L=[['about','About Us'],['track','Track Your Order'],['shipping','Shipping Policy'],['returns','Return &amp; Refund Policy'],['privacy','Privacy Policy'],['terms','Terms &amp; Conditions'],['contact','Contact / Support']];
+ const ic=(href,label,svg,ext)=>`<a href="${esc(href)}" aria-label="${label}"${ext?' target="_blank" rel="noopener"':''}>${svg}</a>`;
+ const A='<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">';
+ const ig=A+'<rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="1" fill="currentColor"/></svg>';
+ const ch=A+'<path d="M21 12a8.5 8.5 0 0 1-12.6 7.4L3 21l1.7-5.1A8.5 8.5 0 1 1 21 12z"/></svg>';
+ const fb=A+'<path d="M14 8h3V4h-3a4 4 0 0 0-4 4v3H7v4h3v6h4v-6h3l1-4h-4V8.5c0-.3.2-.5.5-.5z"/></svg>';
+ return `<div class="ft"><a href="#/" class="logo">${esc(nm)}</a><p class="ft-i">${esc(info('address'))}<br>${esc(info('hours'))}</p><div class="ft-l">${L.map(x=>`<a href="#/${x[0]}">${x[1]}</a>`).join('')}</div><div class="soc">${ic(info('instagram'),'Instagram',ig,1)}${ic(wa||'#/contact','WhatsApp',ch,!!wa)}${ic(info('facebook'),'Facebook',fb,1)}</div><div class="ft-c">© 2026 ${esc(nm)}. All rights reserved.</div></div>`}
 function notfound(){return `<div class="wrap empty"><h2>Page not found</h2><a class="btn" href="#/">Go home</a></div>`}
 
-function route(){
+function route(keep){
  const h=location.hash.replace(/^#\/?/,'').split('/'),r=h[0]||'home';let out;
- if(r=='home')out=home();else if(r=='shop')out=shop();else if(r=='p')out=product(h[1]);else if(r=='cart')out=cartPage();else if(r=='checkout')out=checkout();else if(r=='orders')out=ordersPage(h[1]);else if(r=='profile')out=profilePage();else out=notfound();
- app.innerHTML=out;window.scrollTo(0,0);badge();
+ if(r=='home')out=home();else if(r=='shop')out=shop();else if(r=='p')out=product(h[1]);else if(r=='cart')out=cartPage();else if(r=='checkout')out=checkout();else if(r=='orders')out=ordersPage(h[1]);else if(r=='profile')out=profilePage();else if(r=='wishlist')out=wishPage();else if(r=='search')out=searchPage(dq(h[1]));else if(r=='track')out=trackPage();else if(PAGES[r])out=pageView(r);else out=notfound();
+ app.innerHTML=out;if(!keep)window.scrollTo(0,0);badge();
+ const si=$('#sq');if(si){if(r=='search'){const q=dq(h[1]);if(si.value.trim()!=q)si.value=q}else if(si.value)si.value=''}
  document.querySelectorAll('[data-r]').forEach(a=>a.classList.toggle('on',a.dataset.r==(r=='p'?'shop':r=='checkout'?'cart':r)));
 }
 window.addEventListener('hashchange',()=>{sel={c:0,s:'M',q:1};rate=0;route()});
@@ -281,6 +345,9 @@ document.addEventListener('click',e=>{
  else if(d.add){addCurrent();toast('Added to cart')}
  else if(d.buy){addCurrent();location.hash='#/checkout'}
  else if(d.rm!==undefined){cart.splice(+d.rm,1);save();route()}
+ else if(d.wish){const id=+d.wish,i=wish.indexOf(id),on=i<0;on?wish.push(id):wish.splice(i,1);sv('tx_wish',wish);
+  document.querySelectorAll('[data-wish="'+id+'"]').forEach(b=>{b.classList.toggle('on',on);const wt=b.querySelector('.wt');if(wt)wt.textContent=on?'Saved':'Save'});
+  badge();toast(on?'Added to wishlist':'Removed from wishlist');if(location.hash.indexOf('#/wishlist')==0)route(1)}
  else if(d.clr){if(confirm('Clear saved details?')){prof={};sv('tx_profile',prof);toast('Details cleared');route()}}
 });
 let sb=null;
@@ -304,6 +371,23 @@ document.addEventListener('submit',async e=>{
  const {data,error}=await sb.from('reviews').insert({product_id:pid(),name:f.name.trim(),rating:rate,comment:f.comment.trim()}).select().single();
  if(error)return toast(error.message);REV.unshift(data);rate=0;toast('Thanks for your review!');route();
 });
+let sT;
+document.addEventListener('input',e=>{
+ if(e.target.id!='sq')return;clearTimeout(sT);const v=e.target.value.trim();
+ sT=setTimeout(()=>{if(v)location.hash='#/search/'+encodeURIComponent(v);else if(location.hash.indexOf('#/search')==0)location.hash='#/shop'},350)});
+document.addEventListener('submit',e=>{
+ if(e.target.id!='sf')return;e.preventDefault();clearTimeout(sT);const v=$('#sq').value.trim();
+ if(v)location.hash='#/search/'+encodeURIComponent(v);$('#sq').blur()});
+document.addEventListener('submit',async e=>{
+ if(e.target.id!='tf')return;e.preventDefault();
+ const id=String(new FormData(e.target).get('oid')||'').trim().toUpperCase(),out=$('#tres'),lo=orders.find(o=>o.id==id);
+ out.innerHTML='<p style="color:var(--mute)">Checking…</p>';
+ let status=lo?(lo.status||STEPS[stage(lo)]):null;
+ if(sb){try{const q=await sb.rpc('order_status',{ids:[id]});const r=q.data&&q.data[0];if(r)status=r.status}catch(err){}}
+ if(!status){out.innerHTML='<div class="box" style="background:var(--bg)"><b>Order not found</b><p style="color:var(--mute);margin:6px 0 0">Please check the order ID and try again.</p></div>';return}
+ const s=Math.max(0,STEPS.indexOf(status)),cx=status=='Cancelled';
+ out.innerHTML=`<div class="box" style="background:var(--bg)"><div class="oh"><b>${esc(id)}</b><span class="badge ${s==3&&!cx?'ok':''}">${esc(status)}</span></div>${cx?'':`<div class="trk">${STEPS.map((x,k)=>`<div class="${k<=s?'d':''}">${x}</div>`).join('')}</div>`}</div>`;
+});
 async function boot(){
  if(SB_URL&&SB_KEY){try{
   sb=supabase.createClient(SB_URL,SB_KEY);
@@ -317,9 +401,9 @@ async function boot(){
  }catch(e){}}
  if(ST.primary)document.documentElement.style.setProperty('--blue',ST.primary);
  const nm=ST.store_name||'TRANDIXO';document.title=nm+' – Handmade Tote Bags';document.querySelector('.logo').textContent=nm;
- $('#ft').textContent='© 2026 '+nm+' · Handmade tote bags, stitched in small batches · Free delivery above '+inr(ST.free);
+ $('#ft').innerHTML=footerHTML(nm);
  if(ST.announcement){const a=document.createElement('div');a.textContent=ST.announcement;a.style.cssText='background:var(--navy);color:#fff;text-align:center;padding:8px 12px;font-size:14px';document.body.prepend(a)}
- cart=cart.filter(i=>PRODUCTS.some(p=>p.id==i.id));save();route();
+ cart=cart.filter(i=>PRODUCTS.some(p=>p.id==i.id));wish=wish.filter(id=>PRODUCTS.some(p=>p.id==id));sv('tx_wish',wish);save();route();
 }
 boot();
 </script>
