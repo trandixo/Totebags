@@ -60,6 +60,11 @@ section.s{padding:28px 0}
 .story h2{font-size:28px;margin-bottom:10px}
 .story p{color:var(--mute);margin:0}
 footer{border-top:1px solid var(--line);padding:26px 0 40px;color:var(--mute);font-size:14px;text-align:center}
+.rt{font-size:14px;margin-top:4px}.rt span{color:#f5a623;letter-spacing:1px}.rt small{color:var(--mute)}.rt.big{font-size:16px;margin:8px 0 0}
+.share{display:flex;gap:10px;margin-top:18px}.share .btn{flex:1}
+.rv{padding:12px 0;border-top:1px solid var(--line)}.rv small{color:var(--mute)}
+.pick{display:flex;gap:2px;margin-bottom:10px}.pick button{background:none;font-size:32px;line-height:1;color:var(--line);padding:0 2px}.pick button.on{color:#f5a623}
+.pd .stage img{height:auto!important;max-height:560px;object-fit:contain!important}
 /* product */
 .pd{display:grid;grid-template-columns:1fr 1fr;gap:40px;padding:32px 0 48px}
 .pd .stage{border-radius:28px;display:grid;place-items:center;min-height:460px;position:relative}
@@ -171,9 +176,16 @@ function tote(c,d){d=d||'rgba(255,255,255,.55)';
  return `<svg viewBox="0 0 200 220" aria-hidden="true"><path d="M70 62 C70 8 130 8 130 62" fill="none" stroke="${c}" stroke-width="9" stroke-linecap="round"/><path d="M70 62 C70 14 130 14 130 62" fill="none" stroke="rgba(0,0,0,.18)" stroke-width="2" stroke-dasharray="3 4"/><path d="M28 62 H172 L184 208 Q184 214 178 214 H22 Q16 214 16 208 Z" fill="${c}"/><path d="M28 62 H172 L174 84 H26 Z" fill="rgba(0,0,0,.12)"/><rect x="62" y="116" width="76" height="62" rx="8" fill="rgba(255,255,255,.18)" stroke="${d}" stroke-width="2" stroke-dasharray="5 5"/><circle cx="100" cy="147" r="9" fill="${d}"/><path d="M26 205 H174" stroke="${d}" stroke-width="2" stroke-dasharray="5 5"/></svg>`}
 const tint=h=>{const n=parseInt((h||'#2f78a8').replace('#',''),16)||0x2f78a8,m=v=>Math.round(v*.4+153);return `rgb(${m(n>>16)},${m(n>>8&255)},${m(n&255)})`};
 const pic=(p,c)=>p.image_url?`<img src="${p.image_url}" alt="${p.name}" style="width:100%;height:100%;object-fit:cover;border-radius:inherit">`:tote(p.cols[c]||p.cols[0]);
+const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+let REV=[],rate=0;
+const stars=n=>{n=Math.round(n);return '★★★★★'.slice(0,n)+'☆☆☆☆☆'.slice(0,5-n)};
+const rt=(id,big)=>{const r=REV.filter(x=>x.product_id==id);if(!r.length)return big?'<div class="rt big"><small>No reviews yet</small></div>':'';const a=r.reduce((t,x)=>t+x.rating,0)/r.length;return `<div class="rt ${big?'big':''}"><span>${stars(a)}</span> ${a.toFixed(1)} <small>(${r.length})</small></div>`};
+const shareUrl=()=>location.href.split('#')[0]+'#/p/'+location.hash.split('/')[2];
+function revBox(p){const r=REV.filter(x=>x.product_id==p.id);
+ return `<div class="box" style="margin-bottom:48px"><h3 style="margin-bottom:6px">Ratings and reviews</h3>${r.map(x=>`<div class="rv"><b>${esc(x.name)}</b> <span class="rt"><span>${stars(x.rating)}</span></span><div>${esc(x.comment)}</div><small>${new Date(x.created_at).toLocaleDateString('en-IN')}</small></div>`).join('')||'<p style="color:var(--mute);margin:0">Be the first to review this bag.</p>'}${sb?`<form id="rf" style="margin-top:18px"><h3 style="margin-bottom:8px">Write a review</h3><div class="pick" id="pk">${[1,2,3,4,5].map(n=>`<button type="button" data-star="${n}" aria-label="${n} stars">★</button>`).join('')}</div><label>Your name<input name="name" required></label><label>Review<textarea name="comment" rows="2"></textarea></label><button class="btn">Submit review</button></form>`:''}</div>`}
 function toast(m){const t=document.createElement('div');t.className='toast';t.textContent=m;document.body.appendChild(t);setTimeout(()=>t.remove(),1800)}
 function badge(){const n=cart.reduce((a,i)=>a+i.q,0),b=$('#cc');b.hidden=!n;b.textContent=n}
-function card(p){return `<a class="pc" href="#/p/${p.id}"><div class="im" style="background:${p.bg}">${pic(p,0)}</div><div class="n">${p.name}</div><div class="p">${inr(p.price)}</div></a>`}
+function card(p){return `<a class="pc" href="#/p/${p.id}"><div class="im" style="background:${p.bg}">${pic(p,0)}</div><div class="n">${p.name}</div>${rt(p.id)}<div class="p">${inr(p.price)}</div></a>`}
 const lineUnit=i=>i.price??(PRODUCTS.find(x=>x.id==i.id).price+SIZES[i.s][2]);
 const subtotal=()=>cart.reduce((a,i)=>a+lineUnit(i)*i.q,0);
 const ship=s=>s>=ST.free||!s?0:ST.fee;
@@ -193,12 +205,12 @@ function shop(){const cats=['All',...new Set(PRODUCTS.map(p=>p.cat))];
 let sel={c:0,s:'M',q:1};
 function product(id){const p=PRODUCTS.find(x=>x.id==id);if(!p)return notfound();
  return `<div class="wrap"><a class="back" href="#/shop">← Back to shop</a><div class="pd"><div class="stage" style="background:${p.bg}" id="stage">${pic(p,sel.c)}</div><div>
- <h1>${p.name}</h1><div style="color:var(--mute)">${p.cat} · Handmade</div><div class="price" id="pp">${inr(p.price+SIZES[sel.s][2])}</div><p style="margin:0">${p.desc}</p>
+ <h1>${p.name}</h1><div style="color:var(--mute)">${p.cat} · Handmade</div>${rt(p.id,1)}<div class="price" id="pp">${inr(p.price+SIZES[sel.s][2])}</div><p style="margin:0">${p.desc}</p>
  <div class="opt">Colour</div><div class="sw">${p.cols.map((c,i)=>`<button data-c="${i}" class="${i==sel.c?'on':''}" style="background:${c}" aria-label="Colour ${i+1}"></button>`).join('')}</div>
  <div class="opt">Size</div><div class="sizes">${Object.entries(SIZES).map(([k,v])=>`<button data-s="${k}" class="${k==sel.s?'on':''}">${v[0]} · ${v[1]}</button>`).join('')}</div>
  <div class="opt">Quantity</div><div class="qty"><button data-q="-1" aria-label="Less">−</button><b id="qv">${sel.q}</b><button data-q="1" aria-label="More">+</button></div>
  ${p.stock===0?`<div class="buyrow"><button class="btn ghost" disabled>Out of stock</button></div>`:`<div class="buyrow"><button class="btn ghost" data-add="${p.id}">Add to cart</button><button class="btn" data-buy="${p.id}">Buy now</button></div>`}
- <ul class="meta"><li>✓ Cotton lining, double-stitched straps</li><li>✓ Ships in 2–4 days</li><li>✓ 7-day easy returns</li></ul></div></div></div>`}
+ <ul class="meta"><li>✓ Cotton lining, double-stitched straps</li><li>✓ Ships in 2–4 days</li><li>✓ 7-day easy returns</li></ul><div class="share"><button class="btn ghost" data-share="1">Share link</button><button class="btn ghost" data-wa="1">WhatsApp</button></div></div></div>${revBox(p)}</div>`}
 function cartLine(i,idx,edit){const p=PRODUCTS.find(x=>x.id==i.id)||{name:i.name||'Item',bg:'#e6f1f8',cols:['#2f78a8']};
  return `<div class="li"><div class="th" style="background:${p.bg}">${pic(p,i.c)}</div><div class="i"><b>${p.name}</b><small>${SIZES[i.s][0]} · Qty ${i.q}</small>${edit?`<button class="rm" data-rm="${idx}">Remove</button>`:''}</div><b>${inr(lineUnit(i)*i.q)}</b></div>`}
 function summary(){const s=subtotal(),sh=ship(s);return `<div class="row"><span>Subtotal</span><span>${inr(s)}</span></div><div class="row"><span>Delivery</span><span>${sh?inr(sh):'Free'}</span></div><div class="row t"><span>Total</span><span>${inr(s+sh)}</span></div>`}
@@ -228,7 +240,7 @@ function route(){
  app.innerHTML=out;window.scrollTo(0,0);badge();
  document.querySelectorAll('[data-r]').forEach(a=>a.classList.toggle('on',a.dataset.r==(r=='p'?'shop':r=='checkout'?'cart':r)));
 }
-window.addEventListener('hashchange',()=>{sel={c:0,s:'M',q:1};route()});
+window.addEventListener('hashchange',()=>{sel={c:0,s:'M',q:1};rate=0;route()});
 function pid(){return +location.hash.split('/')[2]}
 function addCurrent(){const id=pid(),k=cart.find(i=>i.id==id&&i.c==sel.c&&i.s==sel.s);k?k.q+=sel.q:cart.push({id,c:sel.c,s:sel.s,q:sel.q});save();badge()}
 document.addEventListener('click',e=>{
@@ -237,6 +249,11 @@ document.addEventListener('click',e=>{
  else if(d.c!==undefined){sel.c=+d.c;const p=PRODUCTS.find(x=>x.id==pid());$('#stage').innerHTML=pic(p,sel.c);document.querySelectorAll('.sw button').forEach((b,i)=>b.classList.toggle('on',i==sel.c))}
  else if(d.s){sel.s=d.s;document.querySelectorAll('.sizes button').forEach(b=>b.classList.toggle('on',b.dataset.s==sel.s));const p=PRODUCTS.find(x=>x.id==pid());$('#pp').textContent=inr(p.price+SIZES[sel.s][2])}
  else if(d.q){sel.q=Math.max(1,Math.min(10,sel.q+ +d.q));$('#qv').textContent=sel.q}
+ else if(d.star){rate=+d.star;document.querySelectorAll('#pk button').forEach(b=>b.classList.toggle('on',+b.dataset.star<=rate))}
+ else if(d.share){const p=PRODUCTS.find(x=>x.id==pid()),u=shareUrl();
+  if(navigator.share){navigator.share({title:p.name,text:p.name+' · '+inr(p.price),url:u}).catch(()=>{})}
+  else{(navigator.clipboard?navigator.clipboard.writeText(u):Promise.reject()).then(()=>toast('Link copied')).catch(()=>prompt('Copy this link',u))}}
+ else if(d.wa){const p=PRODUCTS.find(x=>x.id==pid());window.open('https://wa.me/?text='+encodeURIComponent(p.name+' – '+inr(p.price)+'\n'+shareUrl()),'_blank')}
  else if(d.add){addCurrent();toast('Added to cart')}
  else if(d.buy){addCurrent();location.hash='#/checkout'}
  else if(d.rm!==undefined){cart.splice(+d.rm,1);save();route()}
@@ -251,13 +268,20 @@ document.addEventListener('submit',async e=>{
   if(error){btn.disabled=false;return toast('Order failed: '+error.message)}}
  orders.unshift(o);cart=[];save();location.hash='#/orders/'+id;
 });
+document.addEventListener('submit',async e=>{
+ if(e.target.id!='rf')return;e.preventDefault();if(!rate)return toast('Tap the stars to rate');
+ const f=Object.fromEntries(new FormData(e.target));
+ const {data,error}=await sb.from('reviews').insert({product_id:pid(),name:f.name.trim(),rating:rate,comment:f.comment.trim()}).select().single();
+ if(error)return toast(error.message);REV.unshift(data);rate=0;toast('Thanks for your review!');route();
+});
 async function boot(){
  if(SB_URL&&SB_KEY){try{
   sb=supabase.createClient(SB_URL,SB_KEY);
   const [p,r]=await Promise.all([sb.from('products').select('*').eq('active',true).order('id'),sb.from('settings').select('*')]);
   if(!p.error&&p.data)PRODUCTS=p.data.map(x=>({id:x.id,name:x.name,cat:x.category||'All',price:+x.price,desc:x.description||'',cols:(x.colors&&x.colors.length)?x.colors:['#2f78a8'],image_url:x.image_url,stock:x.stock,bg:tint((x.colors||[])[0])}));
   Object.assign(ST,Object.fromEntries((r.data||[]).map(x=>[x.key,x.value])));
-  ST.free=+(ST.free_delivery??ST.free);ST.fee=+(ST.delivery_fee??ST.fee);
+  ST.free=+(ST.free_delivery??ST.free);
+  const rv=await sb.from('reviews').select('*').order('created_at',{ascending:false}).limit(1000);if(rv.data)REV=rv.data;ST.fee=+(ST.delivery_fee??ST.fee);
   const ids=orders.map(o=>o.id);
   if(ids.length){const q=await sb.rpc('order_status',{ids});if(q.data){q.data.forEach(x=>{const o=orders.find(y=>y.id==x.id);if(o)o.status=x.status});save()}}
  }catch(e){}}
