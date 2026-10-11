@@ -109,10 +109,23 @@ function prod(){return `<div class="top"><h1>Products (${S.p.length})</h1><butto
 function pform(id){const p=S.p.find(x=>x.id==id)||{active:true,colors:['#2f78a8'],category:'Canvas',stock:10};
  const m=document.createElement('div');m.className='modal';m.id='md';
  m.innerHTML=`<div class="box"><h3 style="margin-bottom:14px">${id?'Edit':'Add'} product</h3><label>Name<input id="f_n" value="${esc(p.name)}"></label><div class="f2"><label>Price (₹)<input id="f_p" type="number" min="0" value="${p.price??''}"></label><label>Stock<input id="f_s" type="number" min="0" value="${p.stock}"></label></div><div class="f2"><label>Category${S.c.length?`<select id="f_c">${(S.c.some(c=>c.name==p.category)||!p.category||!id?S.c:[...S.c,{name:p.category}]).map(c=>`<option ${c.name==p.category?'selected':''}>${esc(c.name)}</option>`).join('')}</select>`:`<input id="f_c" value="${esc(p.category)}">`}</label><label>Colours (hex, comma separated)<input id="f_k" value="${esc((p.colors||[]).join(','))}"></label></div><label>Product picture<input id="f_f" type="file" accept="image/*"></label><input id="f_i" type="hidden" value="${esc(p.image_url)}">${p.image_url?`<div style="margin:-4px 0 12px"><img src="${esc(p.image_url)}" alt="" style="height:80px;border-radius:10px;vertical-align:middle"> <small style="color:var(--mute)">Choose a new file to replace it</small></div>`:''}<label>Description<textarea id="f_d" rows="3">${esc(p.description)}</textarea></label><label><input id="f_a" type="checkbox" ${p.active?'checked':''}>Show on store</label><label><input id="f_t" type="checkbox" ${S.t.includes(p.id)?'checked':''}>Show in "Trending Now" on home page</label><div style="display:flex;gap:10px;justify-content:flex-end"><button class="btn g" onclick="$('#md').remove()">Cancel</button><button class="btn" onclick="psave(${id||0})">Save</button></div></div>`;document.body.appendChild(m)}
-async function shrink(f){if(!/^image\/(jpe?g|png|webp)$/.test(f.type))return f;const b=await createImageBitmap(f),k=Math.min(1,1200/Math.max(b.width,b.height)),c=document.createElement('canvas');c.width=b.width*k;c.height=b.height*k;c.getContext('2d').drawImage(b,0,0,c.width,c.height);return new Promise(r=>c.toBlob(x=>r(x||f),f.type=='image/png'?'image/png':'image/jpeg',.85))}
+const ext=b=>b.type=='image/webp'?'webp':b.type=='image/png'?'png':b.type=='image/svg+xml'?'svg':'jpg';
+async function shrink(f,kb=49){
+ if(!/^image\//.test(f.type)||/svg|gif/.test(f.type))return f;
+ const LIM=kb*1024,bmp=await createImageBitmap(f);let max=1200,q=.85,best=null;
+ const enc=(w,h,t,qq,fill)=>{const c=document.createElement('canvas');c.width=w;c.height=h;const x=c.getContext('2d');if(fill){x.fillStyle='#fff';x.fillRect(0,0,w,h)}x.drawImage(bmp,0,0,w,h);return new Promise(r=>c.toBlob(r,t,qq))};
+ for(let i=0;i<24;i++){
+  const k=Math.min(1,max/Math.max(bmp.width,bmp.height)),w=Math.max(1,Math.round(bmp.width*k)),h=Math.max(1,Math.round(bmp.height*k));
+  let b=await enc(w,h,'image/webp',q);
+  if(!b||b.type!='image/webp')b=await enc(w,h,'image/jpeg',q,true);
+  if(!best||b.size<best.size)best=b;
+  if(b.size<=LIM)return b;
+  if(q>.5)q-=.1;else{max*=.8;q=.7}
+ }
+ return best||f}
 async function psave(id){
  let img=$('#f_i').value.trim()||null;const file=$('#f_f').files[0];
- if(file){toast('Uploading picture...');const blob=await shrink(file),path='products/'+Date.now()+(blob.type=='image/png'?'.png':'.jpg');const u=await sb.storage.from('site').upload(path,blob,{contentType:blob.type});if(u.error)return toast(u.error.message);img=sb.storage.from('site').getPublicUrl(path).data.publicUrl}
+ if(file){toast('Uploading picture...');const blob=await shrink(file),path='products/'+Date.now()+'.'+ext(blob);const u=await sb.storage.from('site').upload(path,blob,{contentType:blob.type});if(u.error)return toast(u.error.message);img=sb.storage.from('site').getPublicUrl(path).data.publicUrl}
  const row={name:$('#f_n').value.trim(),price:+$('#f_p').value,stock:+$('#f_s').value,category:$('#f_c').value.trim(),colors:$('#f_k').value.split(',').map(s=>s.trim()).filter(Boolean),image_url:img,description:$('#f_d').value,active:$('#f_a').checked};
  if(!row.name)return toast('Name required');
  let pid=id,error;
@@ -130,7 +143,7 @@ function cform(i){const c=S.c[i]||{name:'',image:''};const m=document.createElem
 async function csave(i){const name=$('#c_n').value.trim();if(!name)return toast('Name required');
  if(S.c.some((c,j)=>j!=i&&c.name.toLowerCase()==name.toLowerCase()))return toast('Category already exists');
  let img=$('#c_i').value||'';const f=$('#c_f').files[0];
- if(f){toast('Uploading picture...');const blob=await shrink(f),path='categories/'+Date.now()+(blob.type=='image/png'?'.png':'.jpg');const u=await sb.storage.from('site').upload(path,blob,{contentType:blob.type});if(u.error)return toast(u.error.message);img=sb.storage.from('site').getPublicUrl(path).data.publicUrl}
+ if(f){toast('Uploading picture...');const blob=await shrink(f),path='categories/'+Date.now()+'.'+ext(blob);const u=await sb.storage.from('site').upload(path,blob,{contentType:blob.type});if(u.error)return toast(u.error.message);img=sb.storage.from('site').getPublicUrl(path).data.publicUrl}
  const list=[...S.c],old=i>=0?list[i].name:null;
  if(i>=0)list[i]={name,image:img};else list.push({name,image:img});
  const r=await sb.from('settings').upsert({key:'categories',value:JSON.stringify(list)});if(r.error)return toast(r.error.message);
@@ -149,15 +162,13 @@ async function lsave(){
  error?toast(error.message):(toast('Appearance saved'),start())}
 function rev(){return `<div class="top"><h1>Reviews (${S.r.length})</h1></div>${S.r.map(x=>{const p=S.p.find(y=>y.id==x.product_id);return `<div class="box" style="display:flex;justify-content:space-between;gap:12px"><div><b>${esc(x.name)}</b> <span style="color:#f5a623">${'★'.repeat(x.rating)}${'☆'.repeat(5-x.rating)}</span><br><small style="color:var(--mute)">${esc(p?p.name:'Deleted product')} · ${new Date(x.created_at).toLocaleDateString('en-IN')}</small><div>${esc(x.comment)}</div></div><button class="btn d s" onclick="rdel(${x.id})">Delete</button></div>`}).join('')||'<div class="box" style="color:var(--mute)">No reviews yet.</div>'}`}
 async function rdel(id){if(!confirm('Delete this review?'))return;const {error}=await sb.from('reviews').delete().eq('id',id);error?toast(error.message):(toast('Deleted'),start())}
-async function hup(){const f=$('#hi').files[0];if(!f)return toast('Choose a PNG first');if(f.size>3e6)return toast('Keep it under 3 MB');
- const path='hero-'+Date.now()+'.png',{error}=await sb.storage.from('site').upload(path,f,{contentType:f.type});if(error)return toast(error.message);
+async function hup(){const f=$('#hi').files[0];if(!f)return toast('Choose a PNG first');toast('Compressing...');const b=await shrink(f);
+ const path='hero-'+Date.now()+'.'+ext(b),{error}=await sb.storage.from('site').upload(path,b,{contentType:b.type});if(error)return toast(error.message);
  await setHero(sb.storage.from('site').getPublicUrl(path).data.publicUrl)}
 async function hrm(){await setHero('')}
 async function setHero(v){const {error}=await sb.from('settings').upsert({key:'hero_image',value:v});error?toast(error.message):(toast('Hero image updated'),start())}
-async function lup(){const f=$('#li').files[0];if(!f)return toast('Choose a logo file first');if(f.size>2e6)return toast('Keep it under 2 MB');
- const ext=f.type=='image/svg+xml'?'svg':f.type=='image/jpeg'?'jpg':f.type=='image/webp'?'webp':'png';
- toast('Uploading logo...');
- const path='logo-'+Date.now()+'.'+ext,{error}=await sb.storage.from('site').upload(path,f,{contentType:f.type});if(error)return toast(error.message);
+async function lup(){const f=$('#li').files[0];if(!f)return toast('Choose a logo file first');toast('Compressing...');const b=await shrink(f);
+ const path='logo-'+Date.now()+'.'+ext(b),{error}=await sb.storage.from('site').upload(path,b,{contentType:b.type});if(error)return toast(error.message);
  await setLogo(sb.storage.from('site').getPublicUrl(path).data.publicUrl)}
 async function lrm(){await setLogo('')}
 async function setLogo(v){const {error}=await sb.from('settings').upsert({key:'logo_image',value:v});error?toast(error.message):(toast('Logo updated'),start())}
