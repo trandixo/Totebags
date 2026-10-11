@@ -195,6 +195,7 @@ select{width:100%;margin-top:4px;padding:12px 14px;border:1px solid var(--line);
 .tb{width:72px;height:72px;border-radius:14px;overflow:hidden;border:2px solid transparent;padding:0;background:#fff;box-shadow:0 0 0 1px var(--line)}
 .tb.on{border-color:var(--blue)}.tb img{width:100%;height:100%;object-fit:cover;display:block}
 .was{color:var(--mute);font-weight:400;font-size:13px;margin-left:6px}.offb{color:var(--coral);font-size:13px;font-weight:700;margin-top:2px}
+.det{margin-bottom:24px}.det p{margin:0 0 12px;color:var(--ink);line-height:1.75}.det h4{margin:18px 0 8px;font:700 16px 'DM Sans',sans-serif}.det ul{margin:0 0 12px;padding-left:22px}.det li{margin:0 0 6px;color:var(--ink);line-height:1.65}
 @media (prefers-reduced-motion:reduce){*{transition:none!important}}
 
 /* ===== v2 theme (matches mockup) ===== */
@@ -357,7 +358,10 @@ const svg=(d,s)=>`<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none
 const grp=p=>/cloth|kurta|dress|shirt|wear|saree/i.test(p.cat)?'Clothing':/access|jewel|earring|bracelet|scarf|bangle/i.test(p.cat)?'Accessories':'Handmade Bags';
 const dq=s=>{try{return decodeURIComponent(s||'')}catch(e){return s||''}};
 const jl=v=>{try{const x=typeof v=='string'?JSON.parse(v):v;return Array.isArray(x)?x:[]}catch(e){return[]}};
-let CATS=[],TREND=[],BANNERS=[],PI={},OFFERS={};
+let CATS=[],TREND=[],BANNERS=[],PI={},OFFERS={},PD={};
+function fmt(t){let h='',ul=[];const fl=()=>{if(ul.length){h+='<ul>'+ul.map(x=>'<li>'+x+'</li>').join('')+'</ul>';ul=[]}};
+ String(t||'').split(/\r?\n/).forEach(l=>{l=l.trim();if(!l){fl();return}const m=l.match(/^[-•*]\s+(.*)/);if(m){ul.push(esc(m[1]));return}fl();const hd=l.match(/^#\s+(.*)/);h+=hd?'<h4>'+esc(hd[1])+'</h4>':'<p>'+esc(l)+'</p>'});fl();return h}
+const detBox=p=>PD[p.id]?`<div class="box det"><h3>Product details</h3>${fmt(PD[p.id])}</div>`:'';
 const offPct=p=>{const v=+OFFERS[p.id];return v>0&&v<100?v:0};
 const eff=p=>{const o=offPct(p);return o?Math.round(p.price*(100-o)/100):p.price};
 const priceH=(p,add)=>{const o=offPct(p);return inr(eff(p)+add)+(o?` <s class="was" style="font-size:18px">${inr(p.price+add)}</s> <span class="offb" style="font-size:16px">${o}% OFF</span>`:'')};
@@ -435,7 +439,7 @@ function product(id){const p=PRODUCTS.find(x=>x.id==id);if(!p)return notfound();
  <div class="opt">Size</div><div class="sizes">${Object.entries(SIZES).map(([k,v])=>`<button data-s="${k}" class="${k==sel.s?'on':''}">${v[0]} · ${v[1]}</button>`).join('')}</div>
  <div class="opt">Quantity</div><div class="qty"><button data-q="-1" aria-label="Less">−</button><b id="qv">${sel.q}</b><button data-q="1" aria-label="More">+</button></div>
  ${p.stock===0?`<div class="buyrow"><button class="btn ghost" disabled>Out of stock</button></div>`:`<div class="buyrow"><button class="btn ghost" data-add="${p.id}">Add to cart</button><button class="btn" data-buy="${p.id}">Buy now</button></div>`}
- <ul class="meta"><li>✓ Cotton lining, double-stitched straps</li><li>✓ Ships in 2–4 days</li><li>✓ 7-day easy returns</li></ul></div></div>${revBox(p)}</div>`}
+ <ul class="meta"><li>✓ Cotton lining, double-stitched straps</li><li>✓ Ships in 2–4 days</li><li>✓ 7-day easy returns</li></ul></div></div>${detBox(p)}${revBox(p)}</div>`}
 function cartLine(i,idx,edit){const p=PRODUCTS.find(x=>x.id==i.id)||{name:i.name||'Item',bg:'#e6f1f8',cols:['#2f78a8']};
  return `<div class="li"><div class="th" style="background:${p.bg}">${pic(p,i.c)}</div><div class="i"><b>${p.name}</b><small>${SIZES[i.s][0]} · Qty ${i.q}</small>${edit?`<button class="rm" data-rm="${idx}">Remove</button>`:''}</div><b>${inr(lineUnit(i)*i.q)}</b></div>`}
 function summary(){const s=subtotal(),sh=ship(s);return `<div class="row"><span>Subtotal</span><span>${inr(s)}</span></div><div class="row"><span>Delivery</span><span>${sh?inr(sh):'Free'}</span></div><div class="row t"><span>Total</span><span>${inr(s+sh)}</span></div>`}
@@ -583,7 +587,7 @@ async function boot(){
   const [p,r]=await Promise.all([sb.from('products').select('*').eq('active',true).order('id'),sb.from('settings').select('*')]);
   if(!p.error&&p.data)PRODUCTS=p.data.map(x=>({id:x.id,name:x.name,cat:x.category||'All',price:+x.price,desc:x.description||'',cols:(x.colors&&x.colors.length)?x.colors:['#2f78a8'],image_url:x.image_url,stock:x.stock,bg:tint((x.colors||[])[0])}));
   Object.assign(ST,Object.fromEntries((r.data||[]).map(x=>[x.key,x.value])));
-  CATS=jl(ST.categories).filter(c=>c&&c.name);TREND=jl(ST.trending);BANNERS=jl(ST.banners).filter(b=>b&&b.title);PI=jo(ST.product_images);OFFERS=jo(ST.offers);
+  CATS=jl(ST.categories).filter(c=>c&&c.name);TREND=jl(ST.trending);BANNERS=jl(ST.banners).filter(b=>b&&b.title);PI=jo(ST.product_images);OFFERS=jo(ST.offers);PD=jo(ST.product_details);
   ST.free=+(ST.free_delivery??ST.free);
   const rv=await sb.from('reviews').select('*').order('created_at',{ascending:false}).limit(1000);if(rv.data)REV=rv.data;ST.fee=+(ST.delivery_fee??ST.fee);
   const ids=orders.map(o=>o.id);
