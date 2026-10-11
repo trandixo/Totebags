@@ -280,10 +280,9 @@ footer{padding:0;background:none;border:0;color:inherit;font-size:inherit;text-a
 </style>
 </head>
 <body>
-<div class="top"><div class="wrap"><span class="l"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M2 6h11v10H2z"/><path d="M13 9h5l3 3v4h-8z"/><circle cx="7" cy="18" r="2"/><circle cx="17" cy="18" r="2"/></svg><span id="tl">Free Shipping on Orders Above ₹999</span></span><span class="c"><span style="color:var(--gold)">♥</span> Handmade &nbsp;|&nbsp; Sustainable &nbsp;|&nbsp; With Love</span><span class="r"><a href="#/track">Track Order</a><a href="#/contact">Need Help?</a></span></div></div>
 <header><div class="wrap bar">
- <a href="#/" class="logo"><span id="lg">Trandixo</span><small>Handmade • Clothing • Accessories</small></a>
- <nav id="nav"><a href="#/" data-r="home">Home</a><span class="dd"><a href="#/shop" data-r="shop">Shop <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><path d="M5 9l7 7 7-7"/></svg></a><span class="dm"><a href="#/shop">All Products</a><a href="#/shop/Handmade%20Bags">Handmade Bags</a><a href="#/shop/Clothing">Clothing</a><a href="#/shop/Accessories">Accessories</a></span></span><a href="#/shop/Handmade%20Bags">Handmade Bags</a><a href="#/shop/Clothing">Clothing</a><a href="#/shop/Accessories">Accessories</a><a href="#/about" data-r="about">About Us</a><a href="#/contact" data-r="contact">Contact</a></nav>
+ <a href="#/" class="logo"><span id="lg">Trandixo</span></a>
+ <nav id="nav"><a href="#/" data-r="home">Home</a><a href="#/shop" data-r="shop">Products</a><a href="#/about" data-r="about">About Us</a><a href="#/contact" data-r="contact">Contact</a></nav>
  <div class="icons">
   <button class="ib" data-srch="1" aria-label="Search"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg></button>
   <a href="#/profile" class="ib" data-r="profile" aria-label="Profile"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-7 8-7s8 3 8 7"/></svg></a>
@@ -431,8 +430,7 @@ function footerHTML(nm){
  const L=a=>a.map(x=>`<a href="${x[1]}">${x[0]}</a>`).join(''),B='#/shop/';
  const so=(u,l,d)=>u?`<a href="${esc(u)}" aria-label="${l}" target="_blank" rel="noopener">${svg(d,20)}</a>`:'';
  const ig='<rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="1" fill="currentColor"/>',fb='<path d="M14 8h3V4h-3a4 4 0 0 0-4 4v3H7v4h3v6h4v-6h3l1-4h-4V8.5c0-.3.2-.5.5-.5z"/>',pt='<circle cx="12" cy="12" r="9"/><path d="M11 8c3-1 5 1 4.5 3.5S13 15 11.5 14.5M11 10l-2 9"/>',yt='<rect x="2" y="5" width="20" height="14" rx="4"/><path d="M10 9l5 3-5 3z"/>';
- return `<div class="nl"><div class="wrap"><div><h3>Stay Updated</h3><p>Get the latest collections, offers and more.</p></div><form id="nf"><input name="email" type="email" required placeholder="Enter your email address" aria-label="Email address"><button>Subscribe</button></form></div></div>
- <div class="fd"><div class="wrap"><div class="fgrid"><div><a href="#/" class="logo">${esc(nm)}<small>Handmade • Clothing • Accessories</small></a><p>At ${esc(nm)}, we bring you unique handmade products, stylish clothing and beautiful accessories crafted with love and care.</p></div>
+ return `<div class="fd"><div class="wrap"><div class="fgrid"><div><a href="#/" class="logo">${esc(nm)}<small>Handmade • Clothing • Accessories</small></a><p>At ${esc(nm)}, we bring you unique handmade products, stylish clothing and beautiful accessories crafted with love and care.</p></div>
  <div><h4>Quick Links</h4>${L([['Home','#/'],['Shop','#/shop'],['About Us','#/about'],['Contact','#/contact'],['Track Order','#/track']])}</div>
  <div><h4>Categories</h4>${L([['Handmade Bags',B+'Handmade%20Bags'],['Clothing',B+'Clothing'],['Accessories',B+'Accessories'],['New Arrivals','#/shop'],['Sale','#/shop']])}</div>
  <div><h4>Follow Us</h4><div class="fs">${so(info('instagram'),'Instagram',ig)}${so(info('facebook'),'Facebook',fb)}${so(info('pinterest'),'Pinterest',pt)}${so(info('youtube'),'YouTube',yt)}</div>
@@ -494,12 +492,6 @@ document.addEventListener('submit',async e=>{
  const {data,error}=await sb.from('reviews').insert({product_id:pid(),name:f.name.trim(),rating:rate,comment:f.comment.trim()}).select().single();
  if(error)return toast(error.message);REV.unshift(data);rate=0;toast('Thanks for your review!');route();
 });
-document.addEventListener('submit',async e=>{
- if(e.target.id!='nf')return;e.preventDefault();const em=String(new FormData(e.target).get('email')||'').trim();
- if(!sb)return toast('Subscription is not available right now');
- const {error}=await sb.from('subscribers').insert({email:em});
- if(error)return toast(error.code=='23505'?'You are already subscribed':'Could not subscribe, please try later');
- e.target.reset();toast('Thanks for subscribing!')});
 let sT;
 document.addEventListener('input',e=>{
  if(e.target.id!='sq')return;clearTimeout(sT);const v=e.target.value.trim();
@@ -528,7 +520,7 @@ async function boot(){
   const ids=orders.map(o=>o.id);
   if(ids.length){const q=await sb.rpc('order_status',{ids});if(q.data){q.data.forEach(x=>{const o=orders.find(y=>y.id==x.id);if(o)o.status=x.status});save()}}
  }catch(e){}}
-  let nm=ST.store_name||'Trandixo';if(nm===nm.toUpperCase())nm=nm.charAt(0)+nm.slice(1).toLowerCase();document.title=nm+' – Handmade Bags, Clothing & Accessories';$('#lg').textContent=nm;$('#tl').textContent=ST.announcement||('Free Shipping on Orders Above '+inr(ST.free));
+  let nm=ST.store_name||'Trandixo';if(nm===nm.toUpperCase())nm=nm.charAt(0)+nm.slice(1).toLowerCase();document.title=nm+' – Handmade Bags, Clothing & Accessories';$('#lg').textContent=nm;
  $('#ft').innerHTML=footerHTML(nm);
   cart=cart.filter(i=>PRODUCTS.some(p=>p.id==i.id));wish=wish.filter(id=>PRODUCTS.some(p=>p.id==id));sv('tx_wish',wish);save();route();
 }
