@@ -169,6 +169,8 @@ input,textarea{width:100%;margin-top:4px;padding:12px 14px;border:1px solid var(
  .search{order:3;flex:1 1 100%;max-width:none}
  .doc{padding:20px;margin-top:18px}
 }
+select{width:100%;margin-top:4px;padding:12px 14px;border:1px solid var(--line);border-radius:12px;background:var(--bg);color:var(--ink);font:inherit}
+.fbar{margin:0 0 14px}.btn.sm{padding:9px 22px;font-size:14px}.fpanel{margin-bottom:18px;max-width:520px}
 @media (prefers-reduced-motion:reduce){*{transition:none!important}}
 
 /* ===== v2 theme (matches mockup) ===== */
@@ -330,6 +332,10 @@ const waLink=()=>{const d=info('phone').replace(/\D/g,'');return d.length>=10?'h
 const svg=(d,s)=>`<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${d}</svg>`;
 const grp=p=>/cloth|kurta|dress|shirt|wear|saree/i.test(p.cat)?'Clothing':/access|jewel|earring|bracelet|scarf|bangle/i.test(p.cat)?'Accessories':'Handmade Bags';
 const dq=s=>{try{return decodeURIComponent(s||'')}catch(e){return s||''}};
+const jl=v=>{try{const x=typeof v=='string'?JSON.parse(v):v;return Array.isArray(x)?x:[]}catch(e){return[]}};
+let CATS=[],TREND=[];
+const catNames=()=>CATS.length?CATS.map(c=>c.name):['Handmade Bags','Clothing','Accessories'];
+const inCat=(p,c)=>CATS.length?String(p.cat).toLowerCase()==String(c).toLowerCase():grp(p)==c;
 const HEART='<svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" aria-hidden="true"><path d="M12 21s-8-5.2-8-11a4.6 4.6 0 0 1 8-3 4.6 4.6 0 0 1 8 3c0 5.8-8 11-8 11z"/></svg>';
 function save(){sv('tx_cart',cart);sv('tx_orders',orders)}
 function tote(c,d){d=d||'rgba(255,255,255,.55)';
@@ -351,10 +357,11 @@ const subtotal=()=>cart.reduce((a,i)=>a+lineUnit(i)*i.q,0);
 const ship=s=>s>=ST.free||!s?0:ST.fee;
 
 function home(){
- const feat=PRODUCTS.slice(0,4),tv=REV.filter(x=>x.comment&&x.rating>=4).slice(0,9);
+ const trd=TREND.map(id=>PRODUCTS.find(p=>p.id==id)).filter(Boolean),feat=trd.length?trd.slice(0,8):PRODUCTS.slice(0,4),tv=REV.filter(x=>x.comment&&x.rating>=4).slice(0,9);
  const P={shirt:'<path d="M8 3 3 6l2 4 3-1v11h8V9l3 1 2-4-5-3a4 4 0 0 1-8 0z"/>',gem:'<circle cx="12" cy="14" r="6"/><path d="M9 4h6l2 4H7z"/>',leaf:'<path d="M5 19c0-9 5-14 15-14 0 10-5 15-14 15"/><path d="M5 19c3-5 6-8 10-10"/>',heart:'<path d="M12 21s-8-5.2-8-11a4.6 4.6 0 0 1 8-3 4.6 4.6 0 0 1 8 3c0 5.8-8 11-8 11z"/>',shield:'<path d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z"/><path d="M9 12l2 2 4-4"/>',truck:'<path d="M2 6h11v10H2z"/><path d="M13 9h5l3 3v4h-8z"/><circle cx="7" cy="18" r="2"/><circle cx="17" cy="18" r="2"/>',ref:'<path d="M20 11a8 8 0 0 0-14-4L4 9"/><path d="M4 4v5h5"/><path d="M4 13a8 8 0 0 0 14 4l2-2"/><path d="M20 20v-5h-5"/>'};
- const cats=[['Handmade Bags','Explore Collection','#/shop/Handmade%20Bags',0],['Clothing','Explore Collection','#/shop/Clothing',P.shirt],['Accessories','Explore Collection','#/shop/Accessories',P.gem],['Sustainable','Our Promise','#/about',P.leaf],['Made with Love','Every Piece Matters','#/about',P.heart]];
- const th=c=>{const g=c[3]===0||c[3]===P.shirt||c[3]===P.gem?PRODUCTS.find(p=>grp(p)==c[0]):null;return g?`<div class="cth">${pic(g,0)}</div>`:`<div class="cth ic">${svg(c[3]||P.leaf,42)}</div>`};
+ const dflt=[['Handmade Bags','Explore Collection','#/shop/Handmade%20Bags',0],['Clothing','Explore Collection','#/shop/Clothing',P.shirt],['Accessories','Explore Collection','#/shop/Accessories',P.gem],['Sustainable','Our Promise','#/about',P.leaf],['Made with Love','Every Piece Matters','#/about',P.heart]];
+ const cats=CATS.length?CATS.map(c=>[c.name,'Explore Collection','#/shop/'+encodeURIComponent(c.name),0,c.image]):dflt;
+ const th=c=>{if(c[4])return `<div class="cth"><img src="${esc(c[4])}" alt=""></div>`;const g=c[3]===0||c[3]===P.shirt||c[3]===P.gem?PRODUCTS.find(p=>inCat(p,c[0])):null;return g?`<div class="cth">${pic(g,0)}</div>`:`<div class="cth ic">${svg(c[3]||P.leaf,42)}</div>`};
  const bg=(i,g)=>ST['banner'+i]?`background-image:linear-gradient(rgba(0,0,0,.28),rgba(0,0,0,.28)),url('${esc(ST['banner'+i])}')`:`background:${g}`;
  const why=[[P.leaf,'100% Handmade<br>&amp; Unique'],[P.shield,'Secure Payments<br>&amp; Easy Checkout'],[P.truck,'Free Shipping<br>on Orders Above '+inr(ST.free)],[P.ref,'Easy Returns<br>Within 7 Days'],[P.heart,'Support<br>Small Businesses']];
  return `<div class="hx"${ST.hero_image?` style="background-image:url('${esc(ST.hero_image)}')"`:''}><div class="wrap"><div class="script">Unique • Sustainable • Handcrafted</div><h1>Style That<br>Tells a Story</h1><p>Discover our exclusive collection of handmade bags, clothing and accessories crafted with love and care.</p><a class="btn" href="#/shop">Shop Now &nbsp;→</a></div>${ST.hero_image?'':`<div class="art">${tote('#c9a06d','#7c5a3a')}</div>`}</div>
@@ -364,9 +371,12 @@ function home(){
  <div class="why"><div class="wrap"><div><h3>Why Shop With Us?</h3><p>More than just a store — it's a movement towards conscious fashion.</p></div>${why.map(w=>`<div class="wi">${svg(w[0],30)}${w[1]}</div>`).join('')}</div></div>
  ${tv.length?`<div class="wrap ts"><h2>What Our Customers Say</h2><div class="tw"><button class="arw l" data-sl="-1" aria-label="Previous">‹</button><div class="tsl" id="tsl">${tv.map(x=>`<div class="tc"><div class="av">${esc(String(x.name||'?').charAt(0).toUpperCase())}</div><div><p>“${esc(x.comment)}”</p><b style="font-size:13px">${esc(x.name)}</b><div class="rt"><span>${stars(x.rating)}</span></div></div></div>`).join('')}</div><button class="arw r" data-sl="1" aria-label="Next">›</button></div></div>`:''}`}
 let cat='All';
-function shop(){const cats=['All','Handmade Bags','Clothing','Accessories'];
- const list=PRODUCTS.filter(p=>cat=='All'||grp(p)==cat);
- return `<div class="wrap" style="padding-top:28px"><div class="sh"><h2>${cat=='All'?'All products':esc(cat)}</h2><span style="color:var(--mute)">${list.length} items</span></div><div class="chips">${cats.map(c=>`<a class="chip ${c==cat?'on':''}" href="#/shop${c=='All'?'':'/'+encodeURIComponent(c)}">${c}</a>`).join('')}</div>${list.length?`<div class="grid" style="padding-bottom:48px">${list.map(card).join('')}</div>`:`<div class="empty"><h2>Nothing here yet</h2><p>New pieces are on the way.</p><a class="btn" href="#/shop">View all products</a></div>`}</div>`}
+let fmin='',fmax='',fsort='',fopen=false;
+function shop(){const cats=['All',...catNames()];
+ let list=PRODUCTS.filter(p=>(cat=='All'||inCat(p,cat))&&(fmin===''||p.price>=+fmin)&&(fmax===''||p.price<=+fmax));
+ if(fsort=='lh')list=[...list].sort((a,b)=>a.price-b.price);else if(fsort=='hl')list=[...list].sort((a,b)=>b.price-a.price);
+ const act=(fmin!==''||fmax!==''||fsort)?' •':'';
+ return `<div class="wrap" style="padding-top:28px"><div class="sh"><h2>${cat=='All'?'All products':esc(cat)}</h2><span style="color:var(--mute)">${list.length} items</span></div><div class="chips">${cats.map(c=>`<a class="chip ${c==cat?'on':''}" href="#/shop${c=='All'?'':'/'+encodeURIComponent(c)}">${esc(c)}</a>`).join('')}</div><div class="fbar"><button class="btn ghost sm" data-fopen="1">Filter${act}</button></div>${fopen?`<div class="box fpanel"><div class="f2"><label>Min price (₹)<input id="fmin" type="number" min="0" inputmode="numeric" value="${esc(fmin)}"></label><label>Max price (₹)<input id="fmax" type="number" min="0" inputmode="numeric" value="${esc(fmax)}"></label></div><label>Sort by<select id="fsort"><option value="">Default</option><option value="lh"${fsort=='lh'?' selected':''}>Price: low to high</option><option value="hl"${fsort=='hl'?' selected':''}>Price: high to low</option></select></label><div class="share" style="margin-top:0"><button class="btn" data-fapply="1">Apply</button><button class="btn ghost" data-fclear="1">Clear</button></div></div>`:''}${list.length?`<div class="grid" style="padding-bottom:48px">${list.map(card).join('')}</div>`:`<div class="empty"><h2>Nothing here yet</h2><p>No products match. Try another category or price range.</p><a class="btn" href="#/shop">View all products</a></div>`}</div>`}
 let sel={c:0,s:'M',q:1};
 function product(id){const p=PRODUCTS.find(x=>x.id==id);if(!p)return notfound();
  return `<div class="wrap"><a class="back" href="#/shop">← Back to shop</a><div class="pd"><div class="stage" style="background:${p.bg}" id="stage">${pic(p,sel.c)}</div><div>
@@ -433,7 +443,7 @@ function footerHTML(nm){
  const ig='<rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="1" fill="currentColor"/>',fb='<path d="M14 8h3V4h-3a4 4 0 0 0-4 4v3H7v4h3v6h4v-6h3l1-4h-4V8.5c0-.3.2-.5.5-.5z"/>',pt='<circle cx="12" cy="12" r="9"/><path d="M11 8c3-1 5 1 4.5 3.5S13 15 11.5 14.5M11 10l-2 9"/>',yt='<rect x="2" y="5" width="20" height="14" rx="4"/><path d="M10 9l5 3-5 3z"/>';
  return `<div class="fd"><div class="wrap"><div class="fgrid"><div><a href="#/" class="logo">${esc(nm)}<small>Handmade • Clothing • Accessories</small></a><p>At ${esc(nm)}, we bring you unique handmade products, stylish clothing and beautiful accessories crafted with love and care.</p></div>
  <div><h4>Quick Links</h4>${L([['Home','#/'],['Shop','#/shop'],['About Us','#/about'],['Contact','#/contact'],['Track Order','#/track']])}</div>
- <div><h4>Categories</h4>${L([['Handmade Bags',B+'Handmade%20Bags'],['Clothing',B+'Clothing'],['Accessories',B+'Accessories'],['New Arrivals','#/shop'],['Sale','#/shop']])}</div>
+ <div><h4>Categories</h4>${L([...(CATS.length?CATS.map(c=>[esc(c.name),B+encodeURIComponent(c.name)]):[['Handmade Bags',B+'Handmade%20Bags'],['Clothing',B+'Clothing'],['Accessories',B+'Accessories']]),['New Arrivals','#/shop'],['Sale','#/shop']])}</div>
  <div><h4>Follow Us</h4><div class="fs">${so(info('instagram'),'Instagram',ig)}${so(info('facebook'),'Facebook',fb)}${so(info('pinterest'),'Pinterest',pt)}${so(info('youtube'),'YouTube',yt)}</div>
  <h4 style="margin-top:20px">Payment Methods</h4><div class="pm"><span style="color:#1a1f71;font-style:italic">VISA</span><span><svg width="30" height="18" viewBox="0 0 30 18" aria-label="Mastercard"><circle cx="11" cy="9" r="8" fill="#eb001b"/><circle cx="19" cy="9" r="8" fill="#f79e1b" fill-opacity=".9"/></svg></span><span style="color:#e56b1f;font-style:italic">UPI</span><span>COD</span></div></div></div>
  <div class="fb"><span>© 2026 ${esc(nm)}. All Rights Reserved.</span><span>${[['Privacy Policy','privacy'],['Terms &amp; Conditions','terms'],['Shipping Policy','shipping'],['Return &amp; Refund Policy','returns']].map(x=>`<a href="#/${x[1]}">${x[0]}</a>`).join(' &nbsp;|&nbsp; ')}</span><button class="up" data-up="1" aria-label="Back to top">↑</button></div></div></div>`}
@@ -470,6 +480,9 @@ document.addEventListener('click',e=>{
  else if(d.wish){const id=+d.wish,i=wish.indexOf(id),on=i<0;on?wish.push(id):wish.splice(i,1);sv('tx_wish',wish);
   document.querySelectorAll('[data-wish="'+id+'"]').forEach(b=>{b.classList.toggle('on',on);const wt=b.querySelector('.wt');if(wt)wt.textContent=on?'Saved':'Save'});
   badge();toast(on?'Added to wishlist':'Removed from wishlist');if(location.hash.indexOf('#/wishlist')==0)route(1)}
+ else if(d.fopen){fopen=!fopen;route(1)}
+ else if(d.fapply){fmin=$('#fmin').value.trim();fmax=$('#fmax').value.trim();fsort=$('#fsort').value;fopen=false;route(1)}
+ else if(d.fclear){fmin='';fmax='';fsort='';fopen=false;route(1)}
  else if(d.clr){if(confirm('Clear saved details?')){prof={};sv('tx_profile',prof);toast('Details cleared');route()}}
 });
 let sb=null;
@@ -516,6 +529,7 @@ async function boot(){
   const [p,r]=await Promise.all([sb.from('products').select('*').eq('active',true).order('id'),sb.from('settings').select('*')]);
   if(!p.error&&p.data)PRODUCTS=p.data.map(x=>({id:x.id,name:x.name,cat:x.category||'All',price:+x.price,desc:x.description||'',cols:(x.colors&&x.colors.length)?x.colors:['#2f78a8'],image_url:x.image_url,stock:x.stock,bg:tint((x.colors||[])[0])}));
   Object.assign(ST,Object.fromEntries((r.data||[]).map(x=>[x.key,x.value])));
+  CATS=jl(ST.categories).filter(c=>c&&c.name);TREND=jl(ST.trending);
   ST.free=+(ST.free_delivery??ST.free);
   const rv=await sb.from('reviews').select('*').order('created_at',{ascending:false}).limit(1000);if(rv.data)REV=rv.data;ST.fee=+(ST.delivery_fee??ST.fee);
   const ids=orders.map(o=>o.id);
