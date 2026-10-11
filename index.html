@@ -194,6 +194,7 @@ select{width:100%;margin-top:4px;padding:12px 14px;border:1px solid var(--line);
 .thumbs{display:flex;gap:10px;margin-top:12px;flex-wrap:wrap}
 .tb{width:72px;height:72px;border-radius:14px;overflow:hidden;border:2px solid transparent;padding:0;background:#fff;box-shadow:0 0 0 1px var(--line)}
 .tb.on{border-color:var(--blue)}.tb img{width:100%;height:100%;object-fit:cover;display:block}
+.was{color:var(--mute);font-weight:400;font-size:13px;margin-left:6px}.offb{color:var(--coral);font-size:13px;font-weight:700;margin-top:2px}
 @media (prefers-reduced-motion:reduce){*{transition:none!important}}
 
 /* ===== v2 theme (matches mockup) ===== */
@@ -356,7 +357,11 @@ const svg=(d,s)=>`<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none
 const grp=p=>/cloth|kurta|dress|shirt|wear|saree/i.test(p.cat)?'Clothing':/access|jewel|earring|bracelet|scarf|bangle/i.test(p.cat)?'Accessories':'Handmade Bags';
 const dq=s=>{try{return decodeURIComponent(s||'')}catch(e){return s||''}};
 const jl=v=>{try{const x=typeof v=='string'?JSON.parse(v):v;return Array.isArray(x)?x:[]}catch(e){return[]}};
-let CATS=[],TREND=[],BANNERS=[],PI={};
+let CATS=[],TREND=[],BANNERS=[],PI={},OFFERS={};
+const offPct=p=>{const v=+OFFERS[p.id];return v>0&&v<100?v:0};
+const eff=p=>{const o=offPct(p);return o?Math.round(p.price*(100-o)/100):p.price};
+const priceH=(p,add)=>{const o=offPct(p);return inr(eff(p)+add)+(o?` <s class="was" style="font-size:18px">${inr(p.price+add)}</s> <span class="offb" style="font-size:16px">${o}% OFF</span>`:'')};
+const canRev=p=>orders.some(o=>o.status!='Cancelled'&&(o.items||[]).some(i=>i.id==p.id));
 const jo=v=>{try{const x=typeof v=='string'?JSON.parse(v):v;return x&&typeof x=='object'&&!Array.isArray(x)?x:{}}catch(e){return{}}};
 const gal=p=>[p.image_url,...(PI[p.id]||[])].filter(Boolean);
 const gimg=u=>`<img src="${esc(u)}" alt="" style="width:100%;height:100%;object-fit:cover">`;
@@ -375,11 +380,11 @@ const stars=n=>{n=Math.round(n);return '★★★★★'.slice(0,n)+'☆☆☆�
 const rt=(id,big)=>{const r=REV.filter(x=>x.product_id==id);if(!r.length)return big?'<div class="rt big"><small>No reviews yet</small></div>':'';const a=r.reduce((t,x)=>t+x.rating,0)/r.length;return `<div class="rt ${big?'big':''}"><span>${stars(a)}</span> ${a.toFixed(1)} <small>(${r.length})</small></div>`};
 const shareUrl=()=>location.href.split('#')[0]+'#/p/'+location.hash.split('/')[2];
 function revBox(p){const r=REV.filter(x=>x.product_id==p.id);
- return `<div class="box" style="margin-bottom:48px"><h3 style="margin-bottom:6px">Ratings and reviews</h3>${r.map(x=>`<div class="rv"><b>${esc(x.name)}</b> <span class="rt"><span>${stars(x.rating)}</span></span><div>${esc(x.comment)}</div><small>${new Date(x.created_at).toLocaleDateString('en-IN')}</small></div>`).join('')||'<p style="color:var(--mute);margin:0">Be the first to review this bag.</p>'}${sb?`<form id="rf" style="margin-top:18px"><h3 style="margin-bottom:8px">Write a review</h3><div class="pick" id="pk">${[1,2,3,4,5].map(n=>`<button type="button" data-star="${n}" aria-label="${n} stars">★</button>`).join('')}</div><label>Your name<input name="name" required value="${esc(prof.name)}"></label><label>Review<textarea name="comment" rows="2"></textarea></label><button class="btn">Submit review</button></form>`:''}</div>`}
+ return `<div class="box" style="margin-bottom:48px"><h3 style="margin-bottom:6px">Ratings and reviews</h3>${r.map(x=>`<div class="rv"><b>${esc(x.name)}</b> <span class="rt"><span>${stars(x.rating)}</span></span><div>${esc(x.comment)}</div><small>${new Date(x.created_at).toLocaleDateString('en-IN')}</small></div>`).join('')||'<p style="color:var(--mute);margin:0">Be the first to review this bag.</p>'}${sb&&canRev(p)?`<form id="rf" style="margin-top:18px"><h3 style="margin-bottom:8px">Write a review</h3><div class="pick" id="pk">${[1,2,3,4,5].map(n=>`<button type="button" data-star="${n}" aria-label="${n} stars">★</button>`).join('')}</div><label>Your name<input name="name" required value="${esc(prof.name)}"></label><label>Review<textarea name="comment" rows="2"></textarea></label><button class="btn">Submit review</button></form>`:(sb?'<p style="color:var(--mute);font-size:14px;margin:16px 0 0">Only customers who bought this bag can write a review.</p>':'')}</div>`}
 function toast(m){const t=document.createElement('div');t.className='toast';t.textContent=m;document.body.appendChild(t);setTimeout(()=>t.remove(),1800)}
 function badge(){const n=cart.reduce((a,i)=>a+i.q,0),b=$('#cc'),w=$('#wc');b.hidden=!n;b.textContent=n;w.hidden=!wish.length;w.textContent=wish.length}
-function card(p){return `<div class="pc"><button class="wbtn${wish.includes(p.id)?' on':''}" data-wish="${p.id}" aria-label="Save to wishlist">${HEART}</button><a href="#/p/${p.id}"><div class="im" style="background:${p.bg}">${pic(p,0)}</div><div class="n">${p.name}</div><div class="p">${inr(p.price)}</div>${rt(p.id)}</a>${p.stock===0?'<button class="qa" disabled>Out of stock</button>':`<button class="qa" data-qadd="${p.id}">Add to Cart</button>`}</div>`}
-const lineUnit=i=>i.price??(PRODUCTS.find(x=>x.id==i.id).price+SIZES[i.s][2]);
+function card(p){return `<div class="pc"><button class="wbtn${wish.includes(p.id)?' on':''}" data-wish="${p.id}" aria-label="Save to wishlist">${HEART}</button><a href="#/p/${p.id}"><div class="im" style="background:${p.bg}">${pic(p,0)}</div><div class="n">${p.name}</div><div class="p">${inr(eff(p))}${offPct(p)?` <s class="was">${inr(p.price)}</s>`:''}</div>${offPct(p)?`<div class="offb">${offPct(p)}% OFF</div>`:''}${rt(p.id)}</a>${p.stock===0?'<button class="qa" disabled>Out of stock</button>':`<button class="qa" data-qadd="${p.id}">Add to Cart</button>`}</div>`}
+const lineUnit=i=>i.price??(eff(PRODUCTS.find(x=>x.id==i.id))+SIZES[i.s][2]);
 const subtotal=()=>cart.reduce((a,i)=>a+lineUnit(i)*i.q,0);
 const ship=s=>s>=ST.free||!s?0:ST.fee;
 
@@ -388,6 +393,11 @@ function bannersHTML(){
  const list=BANNERS.length?BANNERS:[{title:'Handmade\nBags',text:'Carry art, not just an accessory.',btn:'Shop Bags',cat:'Handmade Bags',image:ST.banner1,theme:0},{title:'Trendy\nClothing',text:'Comfort meets style, every day.',btn:'Shop Clothing',cat:'Clothing',image:ST.banner2,theme:1},{title:'Unique\nAccessories',text:'Small details. Big impact.',btn:'Shop Accessories',cat:'Accessories',image:ST.banner3,theme:2}];
  return `<div class="bn" style="--n:${Math.min(list.length,3)}">${list.map(b=>{const th=+b.theme||0,bg=b.image?`background-image:linear-gradient(rgba(0,0,0,.28),rgba(0,0,0,.28)),url('${esc(b.image)}')`:`background:${BTH[th]||BTH[0]}`;
   return `<div class="bi${!b.image&&th==1?' dk':''}" style="${bg}"><h3>${esc(b.title).replace(/\n/g,'<br>')}</h3><p>${esc(b.text)}</p><a class="pill" href="#/shop${b.cat?'/'+encodeURIComponent(b.cat):''}">${esc(b.btn||'Shop Now')} →</a></div>`}).join('')}</div>`}
+function offersHTML(){const l=PRODUCTS.filter(p=>offPct(p)).slice(0,8);
+ return l.length?`<div class="wrap"><div class="sh" style="margin-top:40px"><h2>Special Offers</h2></div><div class="grid">${l.map(card).join('')}</div></div>`:''}
+function catSecHTML(){
+ return catNames().map(c=>{const l=PRODUCTS.filter(p=>inCat(p,c)).sort((a,b)=>b.id-a.id).slice(0,4);
+  return l.length?`<div class="wrap"><div class="sh" style="margin-top:40px"><h2>${esc(c)}</h2><a class="btn line" style="padding:8px 16px;font-size:14px" href="#/shop/${encodeURIComponent(c)}">View all →</a></div><div class="grid">${l.map(card).join('')}</div></div>`:''}).join('')+'<div style="height:40px"></div>'}
 function home(){
  const trd=TREND.map(id=>PRODUCTS.find(p=>p.id==id)).filter(Boolean),feat=trd.length?trd.slice(0,8):PRODUCTS.slice(0,4),tv=REV.filter(x=>x.comment&&x.rating>=4).slice(0,9);
  const P={shirt:'<path d="M8 3 3 6l2 4 3-1v11h8V9l3 1 2-4-5-3a4 4 0 0 1-8 0z"/>',gem:'<circle cx="12" cy="14" r="6"/><path d="M9 4h6l2 4H7z"/>',leaf:'<path d="M5 19c0-9 5-14 15-14 0 10-5 15-14 15"/><path d="M5 19c3-5 6-8 10-10"/>',heart:'<path d="M12 21s-8-5.2-8-11a4.6 4.6 0 0 1 8-3 4.6 4.6 0 0 1 8 3c0 5.8-8 11-8 11z"/>',shield:'<path d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z"/><path d="M9 12l2 2 4-4"/>',truck:'<path d="M2 6h11v10H2z"/><path d="M13 9h5l3 3v4h-8z"/><circle cx="7" cy="18" r="2"/><circle cx="17" cy="18" r="2"/>',ref:'<path d="M20 11a8 8 0 0 0-14-4L4 9"/><path d="M4 4v5h5"/><path d="M4 13a8 8 0 0 0 14 4l2-2"/><path d="M20 20v-5h-5"/>'};
@@ -399,7 +409,7 @@ function home(){
  return `<div class="hx"${ST.hero_image?` style="background-image:url('${esc(ST.hero_image)}')"`:''}><div class="wrap"><div class="script">Unique • Sustainable • Handcrafted</div><h1>Style That<br>Tells a Story</h1><p>Discover our exclusive collection of handmade bags, clothing and accessories crafted with love and care.</p><a class="btn" href="#/shop">Shop Now &nbsp;→</a></div>${ST.hero_image?'':`<div class="art">${tote('#c9a06d','#7c5a3a')}</div>`}</div>
  <div class="cs"><div class="wrap">${cats.map(c=>`<a class="ci" href="${c[2]}">${th(c)}<b>${c[0]}</b><span>${c[1]} →</span></a>`).join('')}</div></div>
  <div class="wrap"><div class="tr"><div><div class="eyebrow">Featured Collection</div><h2>Trending Now</h2><p style="color:var(--mute);margin:0 0 20px;font-size:14px">Handpicked favourites, loved by many.</p><a class="btn line" href="#/shop">View All Products &nbsp;→</a></div><div class="grid">${feat.map(card).join('')}</div></div></div>
- ${bannersHTML()}
+ ${bannersHTML()}${offersHTML()}${catSecHTML()}
  <div class="why"><div class="wrap"><div><h3>Why Shop With Us?</h3><p>More than just a store — it's a movement towards conscious fashion.</p></div>${why.map(w=>`<div class="wi">${svg(w[0],30)}${w[1]}</div>`).join('')}</div></div>
  ${tv.length?`<div class="wrap ts"><h2>What Our Customers Say</h2><div class="tw"><button class="arw l" data-sl="-1" aria-label="Previous">‹</button><div class="tsl" id="tsl">${tv.map(x=>`<div class="tc"><div class="av">${esc(String(x.name||'?').charAt(0).toUpperCase())}</div><div><p>“${esc(x.comment)}”</p><b style="font-size:13px">${esc(x.name)}</b><div class="rt"><span>${stars(x.rating)}</span></div></div></div>`).join('')}</div><button class="arw r" data-sl="1" aria-label="Next">›</button></div></div>`:''}`}
 let cat='All';
@@ -420,12 +430,12 @@ function shop(){const cats=['All',...catNames()];
 let sel={c:0,s:'M',q:1};
 function product(id){const p=PRODUCTS.find(x=>x.id==id);if(!p)return notfound();const G=gal(p);
  return `<div class="wrap"><a class="back" href="#/shop">← Back to shop</a><div class="pd"><div><div class="stage" style="background:${p.bg}" id="stage"><div class="mi" id="mi">${G.length?gimg(G[0]):pic(p,sel.c)}</div><button class="wbtn${wish.includes(p.id)?' on':''}" data-wish="${p.id}" aria-label="Save to wishlist">${HEART}</button><button class="wbtn sbtn" data-share="1" aria-label="Share">${SHARE}</button></div>${G.length>1?`<div class="thumbs">${G.map((u,i)=>`<button class="tb${i?'':' on'}" data-gi="${i}" aria-label="Picture ${i+1}">${gimg(u)}</button>`).join('')}</div>`:''}</div><div>
- <h1>${p.name}</h1><div style="color:var(--mute)">${p.cat} · Handmade</div>${rt(p.id,1)}<div class="price" id="pp">${inr(p.price+SIZES[sel.s][2])}</div><p style="margin:0">${p.desc}</p>
+ <h1>${p.name}</h1><div style="color:var(--mute)">${p.cat} · Handmade</div>${rt(p.id,1)}<div class="price" id="pp">${priceH(p,SIZES[sel.s][2])}</div><p style="margin:0">${p.desc}</p>
  <div class="opt">Colour</div><div class="sw">${p.cols.map((c,i)=>`<button data-c="${i}" class="${i==sel.c?'on':''}" style="background:${c}" aria-label="Colour ${i+1}"></button>`).join('')}</div>
  <div class="opt">Size</div><div class="sizes">${Object.entries(SIZES).map(([k,v])=>`<button data-s="${k}" class="${k==sel.s?'on':''}">${v[0]} · ${v[1]}</button>`).join('')}</div>
  <div class="opt">Quantity</div><div class="qty"><button data-q="-1" aria-label="Less">−</button><b id="qv">${sel.q}</b><button data-q="1" aria-label="More">+</button></div>
  ${p.stock===0?`<div class="buyrow"><button class="btn ghost" disabled>Out of stock</button></div>`:`<div class="buyrow"><button class="btn ghost" data-add="${p.id}">Add to cart</button><button class="btn" data-buy="${p.id}">Buy now</button></div>`}
- <ul class="meta"><li>✓ Cotton lining, double-stitched straps</li><li>✓ Ships in 2–4 days</li><li>✓ 7-day easy returns</li></ul><div class="share"><button class="btn ghost" data-share="1">Share link</button><button class="btn ghost" data-wa="1">WhatsApp</button><button class="btn ghost lbl${wish.includes(p.id)?' on':''}" data-wish="${p.id}">${HEART}<span class="wt">${wish.includes(p.id)?'Saved':'Save'}</span></button></div></div></div>${revBox(p)}</div>`}
+ <ul class="meta"><li>✓ Cotton lining, double-stitched straps</li><li>✓ Ships in 2–4 days</li><li>✓ 7-day easy returns</li></ul></div></div>${revBox(p)}</div>`}
 function cartLine(i,idx,edit){const p=PRODUCTS.find(x=>x.id==i.id)||{name:i.name||'Item',bg:'#e6f1f8',cols:['#2f78a8']};
  return `<div class="li"><div class="th" style="background:${p.bg}">${pic(p,i.c)}</div><div class="i"><b>${p.name}</b><small>${SIZES[i.s][0]} · Qty ${i.q}</small>${edit?`<button class="rm" data-rm="${idx}">Remove</button>`:''}</div><b>${inr(lineUnit(i)*i.q)}</b></div>`}
 function summary(){const s=subtotal(),sh=ship(s);return `<div class="row"><span>Subtotal</span><span>${inr(s)}</span></div><div class="row"><span>Delivery</span><span>${sh?inr(sh):'Free'}</span></div><div class="row t"><span>Total</span><span>${inr(s+sh)}</span></div>`}
@@ -446,7 +456,7 @@ function stage(o){if(o.status)return Math.max(0,STEPS.indexOf(o.status));const h
 function ordersPage(o2){
  const done=o2?`<div class="box" style="margin:28px 0;text-align:center"><div class="ok-ic">✓</div><h2>Order placed</h2><p style="color:var(--mute);margin:6px 0 0">Thanks! Order ${o2} is confirmed. You can track it below.</p></div>`:'';
  if(!orders.length)return `<div class="wrap empty"><h2>No orders yet</h2><p>Your orders and their delivery status will appear here.</p><a class="btn" href="#/shop">Shop totes</a></div>`;
- return `<div class="wrap">${done}<div class="sh" style="margin-top:${o2?0:28}px"><h2>My orders</h2></div><div style="padding-bottom:48px">${orders.map(o=>{const s=stage(o);return `<div class="box ord"><div class="oh"><div><b>${o.id}</b><div style="color:var(--mute);font-size:14px">${new Date(o.t).toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'numeric'})} · ${o.pay}</div></div><span class="badge ${s==3?'ok':''}">${o.status=='Cancelled'?'Cancelled':STEPS[s]}</span></div>${o.items.map(i=>cartLine(i,0,0)).join('')}<div class="trk">${STEPS.map((x,k)=>`<div class="${k<=s?'d':''}">${x}</div>`).join('')}</div><div class="row t"><span>Total</span><span>${inr(o.total)}</span></div><div style="color:var(--mute);font-size:14px">Deliver to: ${o.name}, ${o.addr}, ${o.city} ${o.pin}</div></div>`}).join('')}</div></div>`}
+ return `<div class="wrap">${done}<div class="sh" style="margin-top:${o2?0:28}px"><h2>My orders</h2></div><div style="padding-bottom:48px">${orders.map(o=>{const s=stage(o);return `<div class="box ord"><div class="oh"><div><b>${o.id}</b><div style="color:var(--mute);font-size:14px">${new Date(o.t).toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'numeric'})} · ${o.pay}</div></div><span class="badge ${s==3?'ok':''}">${o.status=='Cancelled'?'Cancelled':STEPS[s]}</span></div>${o.items.map(i=>cartLine(i,0,0)).join('')}${o.status=='Cancelled'?'':[...new Set(o.items.map(i=>i.id))].filter(id=>PRODUCTS.some(x=>x.id==id)).map(id=>`<a class="btn ghost sm" style="margin:4px 8px 4px 0" href="#/review/${id}">★ Review ${esc(PRODUCTS.find(x=>x.id==id).name)}</a>`).join('')}<div class="trk">${STEPS.map((x,k)=>`<div class="${k<=s?'d':''}">${x}</div>`).join('')}</div><div class="row t"><span>Total</span><span>${inr(o.total)}</span></div><div style="color:var(--mute);font-size:14px">Deliver to: ${o.name}, ${o.addr}, ${o.city} ${o.pin}</div></div>`}).join('')}</div></div>`}
 function profilePage(){
  const n=orders.length,spent=orders.filter(o=>o.status!='Cancelled').reduce((a,o)=>a+o.total,0),nm=prof.name||'Guest',lo=orders[0];
  return `<div class="wrap"><div class="sh" style="margin-top:28px"><h2>My profile</h2></div><div class="two">
@@ -467,6 +477,8 @@ function wishPage(){const l=PRODUCTS.filter(p=>wish.includes(p.id));
  return `<div class="wrap" style="padding-top:28px"><div class="sh"><h2>My wishlist</h2><span style="color:var(--mute)">${l.length} saved</span></div><div class="grid" style="padding-bottom:48px">${l.map(card).join('')}</div></div>`}
 function searchPage(q){const ws=q.toLowerCase().split(/\s+/).filter(Boolean),l=PRODUCTS.filter(p=>{const h=(p.name+' '+p.cat+' '+p.desc).toLowerCase();return ws.every(w=>h.includes(w))});
  return `<div class="wrap" style="padding-top:28px"><div class="sh"><h2>Results for “${esc(q)}”</h2><span style="color:var(--mute)">${l.length} found</span></div>${l.length?`<div class="grid" style="padding-bottom:48px">${l.map(card).join('')}</div>`:`<div class="empty"><h2>No bags found</h2><p>Try a different word, like canvas, jute or denim.</p><a class="btn" href="#/shop">Browse all totes</a></div>`}</div>`}
+function reviewPage(id){const p=PRODUCTS.find(x=>x.id==id);if(!p)return notfound();
+ return `<div class="wrap"><div class="doc box"><h2>Write a review</h2><div class="li"><div class="th" style="background:${p.bg}">${pic(p,0)}</div><div class="i"><b>${esc(p.name)}</b><small>${esc(p.cat)} · Handmade</small></div></div>${sb?`<form id="rf" style="margin-top:16px"><div class="pick" id="pk">${[1,2,3,4,5].map(n=>`<button type="button" data-star="${n}" aria-label="${n} stars">★</button>`).join('')}</div><label>Your name<input name="name" required value="${esc(prof.name)}"></label><label>Your review<textarea name="comment" rows="3"></textarea></label><button class="btn block">Submit review</button></form>`:'<p>Reviews are not available right now.</p>'}</div></div>`}
 function trackPage(){return `<div class="wrap"><div class="doc box"><h2>Track your order</h2><p>Enter the order ID you got after checkout, for example TDX-12345.</p><form id="tf"><label>Order ID<input name="oid" required placeholder="TDX-12345" value="${esc(orders[0]?orders[0].id:'')}"></label><button class="btn block">Track order</button></form><div id="tres" style="margin-top:16px"></div></div></div>`}
 const PAGES=Object.assign(Object.create(null),{
  about:['About us',()=>`<p>TRANDIXO makes handmade tote bags. Every bag is cut, stitched and finished by hand in small batches of 20 or fewer.</p><h3>What we use</h3><p>Cotton canvas, natural jute and recycled denim, with cotton lining and double-stitched straps that carry real weight.</p><h3>Why small batches</h3><p>A bag stitched by one person holds up better and carries a little character, so no two bags are exactly alike.</p><p style="margin-top:16px"><a class="btn" href="#/shop">Shop totes</a></p>`],
@@ -491,7 +503,7 @@ function notfound(){return `<div class="wrap empty"><h2>Page not found</h2><a cl
 
 function route(keep){
  const h=location.hash.replace(/^#\/?/,'').split('/'),r=h[0]||'home';let out;if(r=='shop')cat=dq(h[1])||'All';
- if(r=='home')out=home();else if(r=='shop')out=shop();else if(r=='p')out=product(h[1]);else if(r=='cart')out=cartPage();else if(r=='checkout')out=checkout();else if(r=='orders')out=ordersPage(h[1]);else if(r=='profile')out=profilePage();else if(r=='wishlist')out=wishPage();else if(r=='search')out=searchPage(dq(h[1]));else if(r=='track')out=trackPage();else if(PAGES[r])out=pageView(r);else out=notfound();
+ if(r=='home')out=home();else if(r=='shop')out=shop();else if(r=='p')out=product(h[1]);else if(r=='cart')out=cartPage();else if(r=='checkout')out=checkout();else if(r=='orders')out=ordersPage(h[1]);else if(r=='profile')out=profilePage();else if(r=='wishlist')out=wishPage();else if(r=='search')out=searchPage(dq(h[1]));else if(r=='track')out=trackPage();else if(r=='review')out=reviewPage(h[1]);else if(PAGES[r])out=pageView(r);else out=notfound();
  app.innerHTML=out;document.body.style.overflow=fopen?'hidden':'';if(!keep)window.scrollTo(0,0);badge();
  const si=$('#sq');if(si){if(r=='search'){const q=dq(h[1]);if(si.value.trim()!=q)si.value=q}else if(si.value)si.value=''}
  document.querySelectorAll('[data-r]').forEach(a=>a.classList.toggle('on',a.dataset.r==(r=='p'?'shop':r=='checkout'?'cart':r)));
@@ -504,7 +516,7 @@ document.addEventListener('click',e=>{
  if(d.cat){cat=d.cat;route()}
  else if(d.c!==undefined){sel.c=+d.c;const p=PRODUCTS.find(x=>x.id==pid());if(!gal(p).length)$('#mi').innerHTML=pic(p,sel.c);document.querySelectorAll('.sw button').forEach((b,i)=>b.classList.toggle('on',i==sel.c))}
  else if(d.gi!==undefined){const p=PRODUCTS.find(x=>x.id==pid());$('#mi').innerHTML=gimg(gal(p)[+d.gi]);document.querySelectorAll('.tb').forEach((b,i)=>b.classList.toggle('on',i==+d.gi))}
- else if(d.s){sel.s=d.s;document.querySelectorAll('.sizes button').forEach(b=>b.classList.toggle('on',b.dataset.s==sel.s));const p=PRODUCTS.find(x=>x.id==pid());$('#pp').textContent=inr(p.price+SIZES[sel.s][2])}
+ else if(d.s){sel.s=d.s;document.querySelectorAll('.sizes button').forEach(b=>b.classList.toggle('on',b.dataset.s==sel.s));const p=PRODUCTS.find(x=>x.id==pid());$('#pp').innerHTML=priceH(p,SIZES[sel.s][2])}
  else if(d.q){sel.q=Math.max(1,Math.min(10,sel.q+ +d.q));$('#qv').textContent=sel.q}
  else if(d.star){rate=+d.star;document.querySelectorAll('#pk button').forEach(b=>b.classList.toggle('on',+b.dataset.star<=rate))}
  else if(d.share){const p=PRODUCTS.find(x=>x.id==pid()),u=shareUrl();
@@ -546,7 +558,7 @@ document.addEventListener('submit',async e=>{
  if(e.target.id!='rf')return;e.preventDefault();if(!rate)return toast('Tap the stars to rate');
  const f=Object.fromEntries(new FormData(e.target));
  const {data,error}=await sb.from('reviews').insert({product_id:pid(),name:f.name.trim(),rating:rate,comment:f.comment.trim()}).select().single();
- if(error)return toast(error.message);REV.unshift(data);rate=0;toast('Thanks for your review!');route();
+ if(error)return toast(error.message);const pp=pid();REV.unshift(data);rate=0;toast('Thanks for your review!');if(location.hash.indexOf('#/review/')==0)location.hash='#/p/'+pp;else route();
 });
 let sT;
 document.addEventListener('input',e=>{
@@ -571,7 +583,7 @@ async function boot(){
   const [p,r]=await Promise.all([sb.from('products').select('*').eq('active',true).order('id'),sb.from('settings').select('*')]);
   if(!p.error&&p.data)PRODUCTS=p.data.map(x=>({id:x.id,name:x.name,cat:x.category||'All',price:+x.price,desc:x.description||'',cols:(x.colors&&x.colors.length)?x.colors:['#2f78a8'],image_url:x.image_url,stock:x.stock,bg:tint((x.colors||[])[0])}));
   Object.assign(ST,Object.fromEntries((r.data||[]).map(x=>[x.key,x.value])));
-  CATS=jl(ST.categories).filter(c=>c&&c.name);TREND=jl(ST.trending);BANNERS=jl(ST.banners).filter(b=>b&&b.title);PI=jo(ST.product_images);
+  CATS=jl(ST.categories).filter(c=>c&&c.name);TREND=jl(ST.trending);BANNERS=jl(ST.banners).filter(b=>b&&b.title);PI=jo(ST.product_images);OFFERS=jo(ST.offers);
   ST.free=+(ST.free_delivery??ST.free);
   const rv=await sb.from('reviews').select('*').order('created_at',{ascending:false}).limit(1000);if(rv.data)REV=rv.data;ST.fee=+(ST.delivery_fee??ST.fee);
   const ids=orders.map(o=>o.id);
