@@ -86,7 +86,7 @@ async function load(){
  S.c=jl(S.s.categories).filter(c=>c&&c.name);S.t=jl(S.s.trending);
 }
 async function start(){await load();draw()}
-const TABS=[['dash','Dashboard'],['prod','Products'],['cats','Categories'],['ord','Orders'],['rev','Reviews'],['look','Appearance']];
+const TABS=[['dash','Dashboard'],['ord','Orders'],['prod','Products'],['cats','Categories'],['rev','Reviews'],['look','Appearance']];
 function draw(){
  const nav=TABS.map(([k,l])=>`<button class="${S.v==k?'on':''}" onclick="S.v='${k}';draw()">${l}</button>`).join('');
  const v={dash,prod,cats,ord,rev,look}[S.v]();
