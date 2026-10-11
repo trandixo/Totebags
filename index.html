@@ -170,7 +170,19 @@ input,textarea{width:100%;margin-top:4px;padding:12px 14px;border:1px solid var(
  .doc{padding:20px;margin-top:18px}
 }
 select{width:100%;margin-top:4px;padding:12px 14px;border:1px solid var(--line);border-radius:12px;background:var(--bg);color:var(--ink);font:inherit}
-.fbar{margin:0 0 14px}.btn.sm{padding:9px 22px;font-size:14px}.fpanel{margin-bottom:18px;max-width:520px}
+.btn.sm{padding:9px 22px;font-size:14px}
+.bd{position:fixed;inset:0;width:100%;background:rgba(0,0,0,.4);z-index:60;border:0;padding:0;border-radius:0}
+.dr{position:fixed;top:0;right:0;bottom:0;width:min(380px,100%);background:#fff;z-index:61;display:flex;flex-direction:column;box-shadow:-8px 0 30px rgba(0,0,0,.15);padding-top:env(safe-area-inset-top,0px)}
+.dh{display:flex;justify-content:space-between;align-items:center;padding:18px 22px;border-bottom:1px solid var(--line)}
+.dh b{font-size:18px;letter-spacing:.06em}.dh button{background:none;font-size:28px;line-height:1;padding:2px 8px}
+.db{flex:1;overflow:auto;padding:4px 22px}
+.dg{padding:18px 0;border-bottom:1px solid var(--line)}.dg:last-child{border:0}
+.dg h4{margin:0 0 10px;font:700 12px 'DM Sans',sans-serif;letter-spacing:.1em;color:var(--mute);text-transform:uppercase}
+.ck{display:flex;align-items:center;gap:12px;padding:8px 0;margin:0;font-size:15px;cursor:pointer}
+.ck input{width:20px;height:20px;margin:0;padding:0;accent-color:var(--blue);flex:none}
+.ck em{margin-left:auto;font-style:normal;color:var(--mute);font-size:13px}
+.df{display:flex;gap:12px;padding:14px 22px calc(14px + env(safe-area-inset-bottom,0px));border-top:1px solid var(--line)}
+.df .btn{flex:1;padding:13px}
 @media (prefers-reduced-motion:reduce){*{transition:none!important}}
 
 /* ===== v2 theme (matches mockup) ===== */
@@ -371,12 +383,16 @@ function home(){
  <div class="why"><div class="wrap"><div><h3>Why Shop With Us?</h3><p>More than just a store — it's a movement towards conscious fashion.</p></div>${why.map(w=>`<div class="wi">${svg(w[0],30)}${w[1]}</div>`).join('')}</div></div>
  ${tv.length?`<div class="wrap ts"><h2>What Our Customers Say</h2><div class="tw"><button class="arw l" data-sl="-1" aria-label="Previous">‹</button><div class="tsl" id="tsl">${tv.map(x=>`<div class="tc"><div class="av">${esc(String(x.name||'?').charAt(0).toUpperCase())}</div><div><p>“${esc(x.comment)}”</p><b style="font-size:13px">${esc(x.name)}</b><div class="rt"><span>${stars(x.rating)}</span></div></div></div>`).join('')}</div><button class="arw r" data-sl="1" aria-label="Next">›</button></div></div>`:''}`}
 let cat='All';
-let fmin='',fmax='',fsort='',fopen=false;
+const PR=[['Under ₹500',0,500],['₹500 – ₹1,000',500,1000],['₹1,000 – ₹2,500',1000,2500],['₹2,500 – ₹5,000',2500,5000],['Above ₹5,000',5000,1e12]];
+let fprice=[],fsort='',fstock=false,fopen=false;
 function shop(){const cats=['All',...catNames()];
- let list=PRODUCTS.filter(p=>(cat=='All'||inCat(p,cat))&&(fmin===''||p.price>=+fmin)&&(fmax===''||p.price<=+fmax));
+ const base=PRODUCTS.filter(p=>cat=='All'||inCat(p,cat));
+ const inR=(p,i)=>p.price>=PR[i][1]&&p.price<PR[i][2];
+ let list=base.filter(p=>(!fprice.length||fprice.some(i=>inR(p,i)))&&(!fstock||p.stock==null||p.stock>0));
  if(fsort=='lh')list=[...list].sort((a,b)=>a.price-b.price);else if(fsort=='hl')list=[...list].sort((a,b)=>b.price-a.price);
- const act=(fmin!==''||fmax!==''||fsort)?' •':'';
- return `<div class="wrap" style="padding-top:28px"><div class="sh"><h2>${cat=='All'?'All products':esc(cat)}</h2><span style="display:flex;align-items:center;gap:12px;color:var(--mute)">${list.length} items<button class="btn ghost sm" data-fopen="1">Filter${act}</button></span></div><div class="chips">${cats.map(c=>`<a class="chip ${c==cat?'on':''}" href="#/shop${c=='All'?'':'/'+encodeURIComponent(c)}">${esc(c)}</a>`).join('')}</div>${fopen?`<div class="box fpanel"><div class="f2"><label>Min price (₹)<input id="fmin" type="number" min="0" inputmode="numeric" value="${esc(fmin)}"></label><label>Max price (₹)<input id="fmax" type="number" min="0" inputmode="numeric" value="${esc(fmax)}"></label></div><label>Sort by<select id="fsort"><option value="">Default</option><option value="lh"${fsort=='lh'?' selected':''}>Price: low to high</option><option value="hl"${fsort=='hl'?' selected':''}>Price: high to low</option></select></label><div class="share" style="margin-top:0"><button class="btn" data-fapply="1">Apply</button><button class="btn ghost" data-fclear="1">Clear</button></div></div>`:''}${list.length?`<div class="grid" style="padding-bottom:48px">${list.map(card).join('')}</div>`:`<div class="empty"><h2>Nothing here yet</h2><p>No products match. Try another category or price range.</p><a class="btn" href="#/shop">View all products</a></div>`}</div>`}
+ const act=(fprice.length||fsort||fstock)?' •':'';
+ const drawer=fopen?`<button class="bd" data-fclose="1" aria-label="Close filters"></button><div class="dr" role="dialog" aria-label="Filters"><div class="dh"><b>FILTERS</b><button data-fclose="1" aria-label="Close">×</button></div><div class="db"><div class="dg"><h4>Price</h4>${PR.map((r,i)=>`<label class="ck"><input type="checkbox" name="pr" value="${i}"${fprice.includes(i)?' checked':''}><span>${r[0]}</span><em>${base.filter(p=>inR(p,i)).length}</em></label>`).join('')}</div><div class="dg"><h4>Sort by</h4>${[['','Default'],['lh','Price: low to high'],['hl','Price: high to low']].map(o=>`<label class="ck"><input type="radio" name="so" value="${o[0]}"${fsort==o[0]?' checked':''}><span>${o[1]}</span></label>`).join('')}</div><div class="dg"><h4>Availability</h4><label class="ck"><input type="checkbox" id="fst"${fstock?' checked':''}><span>In stock only</span></label></div></div><div class="df"><button class="btn ghost" data-fclear="1">Clear All</button><button class="btn" data-fapply="1">Apply</button></div></div>`:'';
+ return `<div class="wrap" style="padding-top:28px"><div class="sh"><h2>${cat=='All'?'All products':esc(cat)}</h2><span style="display:flex;align-items:center;gap:12px;color:var(--mute)">${list.length} items<button class="btn ghost sm" data-fopen="1">Filter${act}</button></span></div><div class="chips">${cats.map(c=>`<a class="chip ${c==cat?'on':''}" href="#/shop${c=='All'?'':'/'+encodeURIComponent(c)}">${esc(c)}</a>`).join('')}</div>${list.length?`<div class="grid" style="padding-bottom:48px">${list.map(card).join('')}</div>`:`<div class="empty"><h2>Nothing here yet</h2><p>No products match. Try another category or clear the filters.</p><a class="btn" href="#/shop">View all products</a></div>`}${drawer}</div>`}
 let sel={c:0,s:'M',q:1};
 function product(id){const p=PRODUCTS.find(x=>x.id==id);if(!p)return notfound();
  return `<div class="wrap"><a class="back" href="#/shop">← Back to shop</a><div class="pd"><div class="stage" style="background:${p.bg}" id="stage">${pic(p,sel.c)}</div><div>
@@ -452,11 +468,11 @@ function notfound(){return `<div class="wrap empty"><h2>Page not found</h2><a cl
 function route(keep){
  const h=location.hash.replace(/^#\/?/,'').split('/'),r=h[0]||'home';let out;if(r=='shop')cat=dq(h[1])||'All';
  if(r=='home')out=home();else if(r=='shop')out=shop();else if(r=='p')out=product(h[1]);else if(r=='cart')out=cartPage();else if(r=='checkout')out=checkout();else if(r=='orders')out=ordersPage(h[1]);else if(r=='profile')out=profilePage();else if(r=='wishlist')out=wishPage();else if(r=='search')out=searchPage(dq(h[1]));else if(r=='track')out=trackPage();else if(PAGES[r])out=pageView(r);else out=notfound();
- app.innerHTML=out;if(!keep)window.scrollTo(0,0);badge();
+ app.innerHTML=out;document.body.style.overflow=fopen?'hidden':'';if(!keep)window.scrollTo(0,0);badge();
  const si=$('#sq');if(si){if(r=='search'){const q=dq(h[1]);if(si.value.trim()!=q)si.value=q}else if(si.value)si.value=''}
  document.querySelectorAll('[data-r]').forEach(a=>a.classList.toggle('on',a.dataset.r==(r=='p'?'shop':r=='checkout'?'cart':r)));
 }
-window.addEventListener('hashchange',()=>{sel={c:0,s:'M',q:1};rate=0;route()});
+window.addEventListener('hashchange',()=>{sel={c:0,s:'M',q:1};rate=0;fopen=false;route()});
 function pid(){return +location.hash.split('/')[2]}
 function addCurrent(){const id=pid(),k=cart.find(i=>i.id==id&&i.c==sel.c&&i.s==sel.s);k?k.q+=sel.q:cart.push({id,c:sel.c,s:sel.s,q:sel.q});save();badge()}
 document.addEventListener('click',e=>{
@@ -480,9 +496,10 @@ document.addEventListener('click',e=>{
  else if(d.wish){const id=+d.wish,i=wish.indexOf(id),on=i<0;on?wish.push(id):wish.splice(i,1);sv('tx_wish',wish);
   document.querySelectorAll('[data-wish="'+id+'"]').forEach(b=>{b.classList.toggle('on',on);const wt=b.querySelector('.wt');if(wt)wt.textContent=on?'Saved':'Save'});
   badge();toast(on?'Added to wishlist':'Removed from wishlist');if(location.hash.indexOf('#/wishlist')==0)route(1)}
- else if(d.fopen){fopen=!fopen;route(1)}
- else if(d.fapply){fmin=$('#fmin').value.trim();fmax=$('#fmax').value.trim();fsort=$('#fsort').value;fopen=false;route(1)}
- else if(d.fclear){fmin='';fmax='';fsort='';fopen=false;route(1)}
+ else if(d.fopen){fopen=true;route(1)}
+ else if(d.fclose){fopen=false;route(1)}
+ else if(d.fapply){fprice=[...document.querySelectorAll('.dr input[name=pr]:checked')].map(x=>+x.value);fsort=(document.querySelector('.dr input[name=so]:checked')||{}).value||'';fstock=!!$('#fst').checked;fopen=false;route(1)}
+ else if(d.fclear){fprice=[];fsort='';fstock=false;fopen=false;route(1)}
  else if(d.clr){if(confirm('Clear saved details?')){prof={};sv('tx_profile',prof);toast('Details cleared');route()}}
 });
 let sb=null;
