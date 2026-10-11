@@ -183,6 +183,12 @@ select{width:100%;margin-top:4px;padding:12px 14px;border:1px solid var(--line);
 .ck em{margin-left:auto;font-style:normal;color:var(--mute);font-size:13px}
 .df{display:flex;gap:12px;padding:14px 22px calc(14px + env(safe-area-inset-bottom,0px));border-top:1px solid var(--line)}
 .df .btn{flex:1;padding:13px}
+.cts{display:flex;gap:6px;overflow-x:auto;padding-bottom:4px;margin-bottom:16px;scrollbar-width:none}.cts::-webkit-scrollbar{display:none}
+.ct{flex:0 0 auto;width:96px;text-align:center;padding:6px 4px 0;border-bottom:3px solid transparent;color:var(--ink)}
+.ct.on{border-color:var(--blue);color:var(--blue)}
+.cti{display:grid;place-items:center;width:68px;height:68px;margin:0 auto 8px;border-radius:50%;overflow:hidden;background:#f1ece0;color:var(--mute)}
+.cti img{width:100%;height:100%;object-fit:cover}.cti svg{max-width:68%;max-height:68%;height:auto}
+.ctn{display:block;font-size:12px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding-bottom:8px}
 @media (prefers-reduced-motion:reduce){*{transition:none!important}}
 
 /* ===== v2 theme (matches mockup) ===== */
@@ -241,7 +247,7 @@ nav a.on,nav a:hover{background:none;color:var(--navy);border-color:var(--navy)}
 .qa:hover{background:var(--blue)}.qa:disabled{opacity:.5;cursor:default}
 .wbtn{width:30px;height:30px;top:8px;right:8px}
 .chip{display:inline-block}
-.bn{display:grid;grid-template-columns:repeat(3,1fr)}
+.bn{display:grid;grid-template-columns:repeat(var(--n,3),1fr)}
 .bi{min-height:220px;padding:34px;display:flex;flex-direction:column;justify-content:center;align-items:flex-start;color:#fff;background-size:cover;background-position:center}
 .bi h3{font-size:30px;font-weight:500;line-height:1.1;margin-bottom:10px}
 .bi p{margin:0 0 16px;font-size:15px;max-width:210px}
@@ -345,7 +351,7 @@ const svg=(d,s)=>`<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none
 const grp=p=>/cloth|kurta|dress|shirt|wear|saree/i.test(p.cat)?'Clothing':/access|jewel|earring|bracelet|scarf|bangle/i.test(p.cat)?'Accessories':'Handmade Bags';
 const dq=s=>{try{return decodeURIComponent(s||'')}catch(e){return s||''}};
 const jl=v=>{try{const x=typeof v=='string'?JSON.parse(v):v;return Array.isArray(x)?x:[]}catch(e){return[]}};
-let CATS=[],TREND=[];
+let CATS=[],TREND=[],BANNERS=[];
 const catNames=()=>CATS.length?CATS.map(c=>c.name):['Handmade Bags','Clothing','Accessories'];
 const inCat=(p,c)=>CATS.length?String(p.cat).toLowerCase()==String(c).toLowerCase():grp(p)==c;
 const HEART='<svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" aria-hidden="true"><path d="M12 21s-8-5.2-8-11a4.6 4.6 0 0 1 8-3 4.6 4.6 0 0 1 8 3c0 5.8-8 11-8 11z"/></svg>';
@@ -368,6 +374,11 @@ const lineUnit=i=>i.price??(PRODUCTS.find(x=>x.id==i.id).price+SIZES[i.s][2]);
 const subtotal=()=>cart.reduce((a,i)=>a+lineUnit(i)*i.q,0);
 const ship=s=>s>=ST.free||!s?0:ST.fee;
 
+const BTH=['linear-gradient(135deg,#2d4a37,#587a50)','linear-gradient(135deg,#f1e4d0,#d9b99a)','linear-gradient(135deg,#4a2e22,#8a5a34)'];
+function bannersHTML(){
+ const list=BANNERS.length?BANNERS:[{title:'Handmade\nBags',text:'Carry art, not just an accessory.',btn:'Shop Bags',cat:'Handmade Bags',image:ST.banner1,theme:0},{title:'Trendy\nClothing',text:'Comfort meets style, every day.',btn:'Shop Clothing',cat:'Clothing',image:ST.banner2,theme:1},{title:'Unique\nAccessories',text:'Small details. Big impact.',btn:'Shop Accessories',cat:'Accessories',image:ST.banner3,theme:2}];
+ return `<div class="bn" style="--n:${Math.min(list.length,3)}">${list.map(b=>{const th=+b.theme||0,bg=b.image?`background-image:linear-gradient(rgba(0,0,0,.28),rgba(0,0,0,.28)),url('${esc(b.image)}')`:`background:${BTH[th]||BTH[0]}`;
+  return `<div class="bi${!b.image&&th==1?' dk':''}" style="${bg}"><h3>${esc(b.title).replace(/\n/g,'<br>')}</h3><p>${esc(b.text)}</p><a class="pill" href="#/shop${b.cat?'/'+encodeURIComponent(b.cat):''}">${esc(b.btn||'Shop Now')} →</a></div>`}).join('')}</div>`}
 function home(){
  const trd=TREND.map(id=>PRODUCTS.find(p=>p.id==id)).filter(Boolean),feat=trd.length?trd.slice(0,8):PRODUCTS.slice(0,4),tv=REV.filter(x=>x.comment&&x.rating>=4).slice(0,9);
  const P={shirt:'<path d="M8 3 3 6l2 4 3-1v11h8V9l3 1 2-4-5-3a4 4 0 0 1-8 0z"/>',gem:'<circle cx="12" cy="14" r="6"/><path d="M9 4h6l2 4H7z"/>',leaf:'<path d="M5 19c0-9 5-14 15-14 0 10-5 15-14 15"/><path d="M5 19c3-5 6-8 10-10"/>',heart:'<path d="M12 21s-8-5.2-8-11a4.6 4.6 0 0 1 8-3 4.6 4.6 0 0 1 8 3c0 5.8-8 11-8 11z"/>',shield:'<path d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z"/><path d="M9 12l2 2 4-4"/>',truck:'<path d="M2 6h11v10H2z"/><path d="M13 9h5l3 3v4h-8z"/><circle cx="7" cy="18" r="2"/><circle cx="17" cy="18" r="2"/>',ref:'<path d="M20 11a8 8 0 0 0-14-4L4 9"/><path d="M4 4v5h5"/><path d="M4 13a8 8 0 0 0 14 4l2-2"/><path d="M20 20v-5h-5"/>'};
@@ -379,10 +390,14 @@ function home(){
  return `<div class="hx"${ST.hero_image?` style="background-image:url('${esc(ST.hero_image)}')"`:''}><div class="wrap"><div class="script">Unique • Sustainable • Handcrafted</div><h1>Style That<br>Tells a Story</h1><p>Discover our exclusive collection of handmade bags, clothing and accessories crafted with love and care.</p><a class="btn" href="#/shop">Shop Now &nbsp;→</a></div>${ST.hero_image?'':`<div class="art">${tote('#c9a06d','#7c5a3a')}</div>`}</div>
  <div class="cs"><div class="wrap">${cats.map(c=>`<a class="ci" href="${c[2]}">${th(c)}<b>${c[0]}</b><span>${c[1]} →</span></a>`).join('')}</div></div>
  <div class="wrap"><div class="tr"><div><div class="eyebrow">Featured Collection</div><h2>Trending Now</h2><p style="color:var(--mute);margin:0 0 20px;font-size:14px">Handpicked favourites, loved by many.</p><a class="btn line" href="#/shop">View All Products &nbsp;→</a></div><div class="grid">${feat.map(card).join('')}</div></div></div>
- <div class="bn"><div class="bi" style="${bg(1,'linear-gradient(135deg,#2d4a37,#587a50)')}"><h3>Handmade<br>Bags</h3><p>Carry art, not just an accessory.</p><a class="pill" href="#/shop/Handmade%20Bags">Shop Bags →</a></div><div class="bi dk" style="${bg(2,'linear-gradient(135deg,#f1e4d0,#d9b99a)')}"><h3>Trendy<br>Clothing</h3><p>Comfort meets style, every day.</p><a class="pill" href="#/shop/Clothing">Shop Clothing →</a></div><div class="bi" style="${bg(3,'linear-gradient(135deg,#4a2e22,#8a5a34)')}"><h3>Unique<br>Accessories</h3><p>Small details. Big impact.</p><a class="pill" href="#/shop/Accessories">Shop Accessories →</a></div></div>
+ ${bannersHTML()}
  <div class="why"><div class="wrap"><div><h3>Why Shop With Us?</h3><p>More than just a store — it's a movement towards conscious fashion.</p></div>${why.map(w=>`<div class="wi">${svg(w[0],30)}${w[1]}</div>`).join('')}</div></div>
  ${tv.length?`<div class="wrap ts"><h2>What Our Customers Say</h2><div class="tw"><button class="arw l" data-sl="-1" aria-label="Previous">‹</button><div class="tsl" id="tsl">${tv.map(x=>`<div class="tc"><div class="av">${esc(String(x.name||'?').charAt(0).toUpperCase())}</div><div><p>“${esc(x.comment)}”</p><b style="font-size:13px">${esc(x.name)}</b><div class="rt"><span>${stars(x.rating)}</span></div></div></div>`).join('')}</div><button class="arw r" data-sl="1" aria-label="Next">›</button></div></div>`:''}`}
 let cat='All';
+function catTile(c){let im;
+ if(c=='All')im=svg('<rect x="3" y="3" width="7" height="7" rx="2"/><rect x="14" y="3" width="7" height="7" rx="2"/><rect x="3" y="14" width="7" height="7" rx="2"/><rect x="14" y="14" width="7" height="7" rx="2"/>',34);
+ else{const o=CATS.find(x=>x.name==c),pr=PRODUCTS.find(p=>inCat(p,c));im=o&&o.image?`<img src="${esc(o.image)}" alt="">`:pr?pic(pr,0):svg('<path d="M5 19c0-9 5-14 15-14 0 10-5 15-14 15"/>',34)}
+ return `<a class="ct${c==cat?' on':''}" href="#/shop${c=='All'?'':'/'+encodeURIComponent(c)}"><span class="cti">${im}</span><span class="ctn">${esc(c)}</span></a>`}
 const PR=[['Under ₹500',0,500],['₹500 – ₹1,000',500,1000],['₹1,000 – ₹2,500',1000,2500],['₹2,500 – ₹5,000',2500,5000],['Above ₹5,000',5000,1e12]];
 let fprice=[],fsort='',fstock=false,fopen=false;
 function shop(){const cats=['All',...catNames()];
@@ -392,7 +407,7 @@ function shop(){const cats=['All',...catNames()];
  if(fsort=='lh')list=[...list].sort((a,b)=>a.price-b.price);else if(fsort=='hl')list=[...list].sort((a,b)=>b.price-a.price);
  const act=(fprice.length||fsort||fstock)?' •':'';
  const drawer=fopen?`<button class="bd" data-fclose="1" aria-label="Close filters"></button><div class="dr" role="dialog" aria-label="Filters"><div class="dh"><b>FILTERS</b><button data-fclose="1" aria-label="Close">×</button></div><div class="db"><div class="dg"><h4>Price</h4>${PR.map((r,i)=>`<label class="ck"><input type="checkbox" name="pr" value="${i}"${fprice.includes(i)?' checked':''}><span>${r[0]}</span><em>${base.filter(p=>inR(p,i)).length}</em></label>`).join('')}</div><div class="dg"><h4>Sort by</h4>${[['','Default'],['lh','Price: low to high'],['hl','Price: high to low']].map(o=>`<label class="ck"><input type="radio" name="so" value="${o[0]}"${fsort==o[0]?' checked':''}><span>${o[1]}</span></label>`).join('')}</div><div class="dg"><h4>Availability</h4><label class="ck"><input type="checkbox" id="fst"${fstock?' checked':''}><span>In stock only</span></label></div></div><div class="df"><button class="btn ghost" data-fclear="1">Clear All</button><button class="btn" data-fapply="1">Apply</button></div></div>`:'';
- return `<div class="wrap" style="padding-top:28px"><div class="sh"><h2>${cat=='All'?'All products':esc(cat)}</h2><span style="display:flex;align-items:center;gap:12px;color:var(--mute)">${list.length} items<button class="btn ghost sm" data-fopen="1">Filter${act}</button></span></div><div class="chips">${cats.map(c=>`<a class="chip ${c==cat?'on':''}" href="#/shop${c=='All'?'':'/'+encodeURIComponent(c)}">${esc(c)}</a>`).join('')}</div>${list.length?`<div class="grid" style="padding-bottom:48px">${list.map(card).join('')}</div>`:`<div class="empty"><h2>Nothing here yet</h2><p>No products match. Try another category or clear the filters.</p><a class="btn" href="#/shop">View all products</a></div>`}${drawer}</div>`}
+ return `<div class="wrap" style="padding-top:28px"><div class="sh"><h2>${cat=='All'?'All products':esc(cat)}</h2><span style="display:flex;align-items:center;gap:12px;color:var(--mute)">${list.length} items<button class="btn ghost sm" data-fopen="1">Filter${act}</button></span></div><div class="cts">${cats.map(catTile).join('')}</div>${list.length?`<div class="grid" style="padding-bottom:48px">${list.map(card).join('')}</div>`:`<div class="empty"><h2>Nothing here yet</h2><p>No products match. Try another category or clear the filters.</p><a class="btn" href="#/shop">View all products</a></div>`}${drawer}</div>`}
 let sel={c:0,s:'M',q:1};
 function product(id){const p=PRODUCTS.find(x=>x.id==id);if(!p)return notfound();
  return `<div class="wrap"><a class="back" href="#/shop">← Back to shop</a><div class="pd"><div class="stage" style="background:${p.bg}" id="stage">${pic(p,sel.c)}</div><div>
@@ -546,7 +561,7 @@ async function boot(){
   const [p,r]=await Promise.all([sb.from('products').select('*').eq('active',true).order('id'),sb.from('settings').select('*')]);
   if(!p.error&&p.data)PRODUCTS=p.data.map(x=>({id:x.id,name:x.name,cat:x.category||'All',price:+x.price,desc:x.description||'',cols:(x.colors&&x.colors.length)?x.colors:['#2f78a8'],image_url:x.image_url,stock:x.stock,bg:tint((x.colors||[])[0])}));
   Object.assign(ST,Object.fromEntries((r.data||[]).map(x=>[x.key,x.value])));
-  CATS=jl(ST.categories).filter(c=>c&&c.name);TREND=jl(ST.trending);
+  CATS=jl(ST.categories).filter(c=>c&&c.name);TREND=jl(ST.trending);BANNERS=jl(ST.banners).filter(b=>b&&b.title);
   ST.free=+(ST.free_delivery??ST.free);
   const rv=await sb.from('reviews').select('*').order('created_at',{ascending:false}).limit(1000);if(rv.data)REV=rv.data;ST.fee=+(ST.delivery_fee??ST.fee);
   const ids=orders.map(o=>o.id);
