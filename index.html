@@ -90,6 +90,7 @@ footer{border-top:1px solid var(--line);background:var(--card);padding:36px 0 40
 .sw button{width:34px;height:34px;border-radius:50%;border:3px solid var(--card);box-shadow:0 0 0 2px var(--line)}
 .sw button.on{box-shadow:0 0 0 2px var(--blue)}
 .sizes{display:flex;gap:10px;flex-wrap:wrap}
+.sizes button{display:inline-flex;align-items:center}
 .sizes button.x{opacity:.45;text-decoration:line-through;cursor:not-allowed}
 .sw button.x{opacity:.35;cursor:not-allowed;position:relative;overflow:hidden}.sw button.x:after{content:"";position:absolute;left:-4px;right:-4px;top:50%;height:2px;background:#d63c4f;transform:rotate(-45deg)}
 .sizes button{background:var(--card);border:1px solid var(--line);padding:10px 16px;border-radius:12px;font-weight:500}
@@ -384,17 +385,20 @@ const detBox=p=>PD[p.id]?`<div class="box det"><h3>Product details</h3>${fmt(PD[
 const offPct=p=>{const v=+OFFERS[p.id];return v>0&&v<100?v:0};
 const eff=p=>{const o=offPct(p);return o?Math.round(p.price*(100-o)/100):p.price};
 const LEG=Object.entries(SIZES).map(([k,v])=>({k,n:v[0],d:v[1],add:v[2],leg:1}));
-function vars(p){const c=PV[p.id];if(!c||!Array.isArray(c.sizes))return LEG.map(v=>({...v,price:p.price+v.add}));
- const l=c.sizes.filter(v=>v&&v.k);return l.length?l.map(v=>({k:String(v.k),n:v.n||'',d:v.d||'',price:+v.price||p.price,out:!!v.out})):[{k:'-',n:'',d:'',price:p.price,single:1}]}
-const cols=p=>{const c=(PV[p.id]||{}).colors||[];return p.cols.map((h,i)=>({h,n:(c[i]&&c[i].n)||'',out:!!(c[i]&&c[i].out)}))};
+function normPV(o){Object.values(o).forEach(c=>{if(c&&!Array.isArray(c.variants)&&Array.isArray(c.sizes)&&c.sizes.length)c.variants=c.sizes.map(v=>({k:v.k,n:v.n,img:'',price:v.price,mrp:0,stock:v.out?0:null}))});return o}
+function vars(p){const c=PV[p.id],l=c&&Array.isArray(c.variants)?c.variants.filter(v=>v&&v.k):[];
+ if(!l.length)return LEG.map(v=>({...v,price:p.price+v.add}));
+ return l.map(v=>{const st=(v.stock===''||v.stock==null)?null:+v.stock;return {k:String(v.k),n:v.n||'',img:v.img||'',price:+v.price||p.price,mrp:+v.mrp||0,stock:st,out:st!==null&&st<=0,nv:1}})}
+const cols=p=>p.cols.map(h=>({h,n:'',out:false}));
 const vget=(p,k)=>vars(p).find(v=>v.k==k);
 const unit=(p,v)=>v.leg?eff(p)+v.add:(offPct(p)?Math.round(v.price*(100-offPct(p))/100):v.price);
-const was=(p,v)=>v.leg?p.price+v.add:v.price;
-const isOut=p=>p.stock===0||!!(PV[p.id]&&PV[p.id].out)||vars(p).every(v=>v.out)||cols(p).every(c=>c.out);
-const okSel=(p,x)=>{const v=vget(p,x.s),c=cols(p)[x.c];return !!v&&!v.out&&!!c&&!c.out};
-const firstSel=p=>{const vs=vars(p),cs=cols(p),v=vs.find(x=>!x.out)||vs[0];let ci=cs.findIndex(x=>!x.out);if(ci<0)ci=0;return{s:v.k,c:ci}};
+const was=(p,v)=>v.leg?p.price+v.add:(offPct(p)?v.price:(v.mrp>v.price?v.mrp:0));
+const isOut=p=>p.stock===0||!!(PV[p.id]&&PV[p.id].out)||vars(p).every(v=>v.out);
+const okSel=(p,x)=>{const v=vget(p,x.s);return !!v&&!v.out&&!!cols(p)[x.c]};
+const firstSel=p=>{const vs=vars(p),v=vs.find(x=>!x.out)||vs[0];return{s:v.k,c:0}};
+const vcap=(p,k)=>{const v=vget(p,k);return v&&v.stock!=null?Math.max(1,Math.min(10,v.stock)):10};
 const szName=(p,i)=>{if(i.sn!=null)return i.sn;const v=p&&vget(p,i.s);if(v&&!v.single)return v.n;return (SIZES[i.s]||[''])[0]};
-const priceH=(p,v)=>{const o=offPct(p),u=unit(p,v);return inr(u)+(o?` <s class="was" style="font-size:18px">${inr(was(p,v))}</s> <span class="offb" style="font-size:16px">${o}% OFF</span>`:'')};
+const priceH=(p,v)=>{const o=offPct(p),u=unit(p,v),w=was(p,v),pc=o||(w>u?Math.round((w-u)*100/w):0);return inr(u)+(w>u?` <s class="was" style="font-size:18px">${inr(w)}</s> <span class="offb" style="font-size:16px">${pc}% OFF</span>`:'')};
 const canRev=p=>myOrders().some(o=>o.status!='Cancelled'&&(o.items||[]).some(i=>i.id==p.id));
 const jo=v=>{try{const x=typeof v=='string'?JSON.parse(v):v;return x&&typeof x=='object'&&!Array.isArray(x)?x:{}}catch(e){return{}}};
 const gal=p=>[p.image_url,...(PI[p.id]||[])].filter(Boolean);
@@ -463,18 +467,20 @@ function shop(){const cats=['All',...catNames()];
  return `<div class="wrap" style="padding-top:28px"><div class="sh"><h2>${cat=='All'?'All products':esc(cat)}</h2><span style="display:flex;align-items:center;gap:12px;color:var(--mute)">${list.length} items<button class="btn ghost sm" data-fopen="1">Filter${act}</button></span></div><div class="cts">${cats.map(catTile).join('')}</div>${list.length?`<div class="grid" style="padding-bottom:48px">${list.map(card).join('')}</div>`:`<div class="empty"><h2>Nothing here yet</h2><p>No products match. Try another category or clear the filters.</p><a class="btn" href="#/shop">View all products</a></div>`}${drawer}</div>`}
 let sel={c:0,s:'M',q:1};
 function product(id){const p=PRODUCTS.find(x=>x.id==id);if(!p)return notfound();const G=gal(p);
- {const v0=vget(p,sel.s),c0=cols(p)[sel.c],f=firstSel(p);if(!v0||v0.out)sel.s=f.s;if(!c0||c0.out)sel.c=f.c}
- return `<div class="wrap"><a class="back" href="#/shop">← Back to shop</a><div class="pd"><div><div class="stage" style="background:${p.bg}" id="stage"><div class="mi" id="mi">${G.length?gimg(G[0]):pic(p,sel.c)}</div><button class="wbtn${wish.includes(p.id)?' on':''}" data-wish="${p.id}" aria-label="Save to wishlist">${HEART}</button><button class="wbtn sbtn" data-share="1" aria-label="Share">${SHARE}</button></div>${G.length>1?`<div class="thumbs">${G.map((u,i)=>`<button class="tb${i?'':' on'}" data-gi="${i}" aria-label="Picture ${i+1}">${gimg(u)}</button>`).join('')}</div>`:''}</div><div>
+ {const v0=vget(p,sel.s),f=firstSel(p);if(!v0||v0.out)sel.s=f.s;if(!cols(p)[sel.c])sel.c=0;sel.q=Math.min(sel.q,vcap(p,sel.s))}
+ return `<div class="wrap"><a class="back" href="#/shop">← Back to shop</a><div class="pd"><div><div class="stage" style="background:${p.bg}" id="stage"><div class="mi" id="mi">${mainImg(p,G)}</div><button class="wbtn${wish.includes(p.id)?' on':''}" data-wish="${p.id}" aria-label="Save to wishlist">${HEART}</button><button class="wbtn sbtn" data-share="1" aria-label="Share">${SHARE}</button></div>${G.length>1?`<div class="thumbs">${G.map((u,i)=>`<button class="tb${i?'':' on'}" data-gi="${i}" aria-label="Picture ${i+1}">${gimg(u)}</button>`).join('')}</div>`:''}</div><div>
  <h1>${p.name}</h1><div style="color:var(--mute)">${p.cat} · Handmade</div>${rt(p.id,1)}<div class="price" id="pp">${priceH(p,vget(p,sel.s))}</div><p style="margin:0">${p.desc}</p>
- <div class="opt">Colour<span id="cn" style="font-weight:400;color:var(--mute)">${cols(p)[sel.c].n?' · '+esc(cols(p)[sel.c].n):''}</span></div><div class="sw">${cols(p).map((c,i)=>`<button data-c="${i}" class="${i==sel.c?'on':''}${c.out?' x':''}" style="background:${c.h}" aria-label="${esc(c.n||'Colour '+(i+1))}${c.out?' (out of stock)':''}"${c.out?' disabled':''}></button>`).join('')}</div>
- ${vars(p).some(v=>v.single)?'':`<div class="opt">Size</div><div class="sizes">${vars(p).map(v=>`<button data-s="${esc(v.k)}" class="${v.k==sel.s?'on':''}${v.out?' x':''}"${v.out?' disabled':''}>${esc(v.n)}${v.d?' · '+esc(v.d):''}${v.leg?'':' · '+inr(unit(p,v))}${v.out?' (Out of stock)':''}</button>`).join('')}</div>`}
+ ${vars(p)[0].nv?'':`<div class="opt">Colour</div><div class="sw">${cols(p).map((c,i)=>`<button data-c="${i}" class="${i==sel.c?'on':''}" style="background:${c.h}" aria-label="Colour ${i+1}"></button>`).join('')}</div>`}
+ <div class="opt">${vars(p)[0].nv?'Choose option':'Size'}</div><div class="sizes">${vars(p).map(v=>`<button data-s="${esc(v.k)}" class="${v.k==sel.s?'on':''}${v.out?' x':''}"${v.out?' disabled':''}>${v.img?`<img src="${esc(v.img)}" alt="" style="width:26px;height:26px;border-radius:7px;object-fit:cover;vertical-align:middle;margin-right:8px">`:''}${esc(v.n)}${v.d?' · '+esc(v.d):''}${v.leg?'':' · '+inr(unit(p,v))}${v.out?' (Out of stock)':''}</button>`).join('')}</div>
  <div class="opt">Quantity</div><div class="qty"><button data-q="-1" aria-label="Less">−</button><b id="qv">${sel.q}</b><button data-q="1" aria-label="More">+</button></div>
  <div id="br">${buyRow(p)}</div>
  <ul class="meta"><li>✓ Cotton lining, double-stitched straps</li><li>✓ Ships in 2–4 days</li><li>✓ 7-day easy returns</li></ul></div></div>${detBox(p)}${revBox(p)}</div>`}
-const buyRow=p=>isOut(p)||!okSel(p,sel)?`<div class="buyrow"><button class="btn ghost" disabled>Out of stock</button></div>`:`<div class="buyrow"><button class="btn ghost" data-add="${p.id}">Add to cart</button><button class="btn" data-buy="${p.id}">Buy now</button></div>`;
-function upd(p){$('#pp').innerHTML=priceH(p,vget(p,sel.s));const n=cols(p)[sel.c].n,e=$('#cn');if(e)e.textContent=n?' · '+n:'';$('#br').innerHTML=buyRow(p)}
+const mainImg=(p,G)=>{const v=vget(p,sel.s);return v&&v.img?gimg(v.img):(G.length?gimg(G[0]):pic(p,sel.c))};
+const lowTxt=p=>{const v=vget(p,sel.s);return v&&v.stock!=null&&v.stock>0&&v.stock<=5?`<div style="color:var(--coral);font-size:13px;font-weight:700;margin-top:14px">Only ${v.stock} left</div>`:''};
+const buyRow=p=>isOut(p)||!okSel(p,sel)?`<div class="buyrow"><button class="btn ghost" disabled>Out of stock</button></div>`:lowTxt(p)+`<div class="buyrow"><button class="btn ghost" data-add="${p.id}">Add to cart</button><button class="btn" data-buy="${p.id}">Buy now</button></div>`;
+function upd(p){$('#pp').innerHTML=priceH(p,vget(p,sel.s));sel.q=Math.min(sel.q,vcap(p,sel.s));$('#qv').textContent=sel.q;const v=vget(p,sel.s);if(v&&v.nv){const G=gal(p);$('#mi').innerHTML=mainImg(p,G)}$('#br').innerHTML=buyRow(p)}
 function cartLine(i,idx,edit){const p=PRODUCTS.find(x=>x.id==i.id)||{name:i.name||'Item',bg:'#e6f1f8',cols:['#2f78a8']};
- return `<div class="li"><div class="th" style="background:${p.bg}">${pic(p,i.c)}</div><div class="i"><b>${p.name}</b><small>${[szName(p,i),i.cn].filter(Boolean).join(' · ')}${szName(p,i)||i.cn?' · ':''}Qty ${i.q}</small>${edit?`<button class="rm" data-rm="${idx}">Remove</button>`:''}</div><b>${inr(lineUnit(i)*i.q)}</b></div>`}
+ return `<div class="li"><div class="th" style="background:${p.bg}">${(()=>{const v=vget(p,i.s);return v&&v.img?gimg(v.img):pic(p,i.c)})()}</div><div class="i"><b>${p.name}</b><small>${[szName(p,i),i.cn].filter(Boolean).join(' · ')}${szName(p,i)||i.cn?' · ':''}Qty ${i.q}</small>${edit?`<button class="rm" data-rm="${idx}">Remove</button>`:''}</div><b>${inr(lineUnit(i)*i.q)}</b></div>`}
 function summary(){const s=subtotal(),sh=ship(s);return `<div class="row"><span>Subtotal</span><span>${inr(s)}</span></div><div class="row"><span>Delivery</span><span>${sh?inr(sh):'Free'}</span></div><div class="row t"><span>Total</span><span>${inr(s+sh)}</span></div>`}
 function cartPage(){
  if(!cart.length)return `<div class="wrap empty"><h2>Your cart is empty</h2><p>Pick a tote and it will show up here.</p><a class="btn" href="#/shop">Browse totes</a></div>`;
@@ -559,7 +565,7 @@ document.addEventListener('click',e=>{
  else if(d.c!==undefined){sel.c=+d.c;const p=PRODUCTS.find(x=>x.id==pid());if(!gal(p).length)$('#mi').innerHTML=pic(p,sel.c);document.querySelectorAll('.sw button').forEach((b,i)=>b.classList.toggle('on',i==sel.c));upd(p)}
  else if(d.gi!==undefined){const p=PRODUCTS.find(x=>x.id==pid());$('#mi').innerHTML=gimg(gal(p)[+d.gi]);document.querySelectorAll('.tb').forEach((b,i)=>b.classList.toggle('on',i==+d.gi))}
  else if(d.s){sel.s=d.s;document.querySelectorAll('.sizes button').forEach(b=>b.classList.toggle('on',b.dataset.s==sel.s));const p=PRODUCTS.find(x=>x.id==pid());upd(p)}
- else if(d.q){sel.q=Math.max(1,Math.min(10,sel.q+ +d.q));$('#qv').textContent=sel.q}
+ else if(d.q){const p=PRODUCTS.find(x=>x.id==pid());sel.q=Math.max(1,Math.min(p?vcap(p,sel.s):10,sel.q+ +d.q));$('#qv').textContent=sel.q}
  else if(d.star){rate=+d.star;document.querySelectorAll('#pk button').forEach(b=>b.classList.toggle('on',+b.dataset.star<=rate))}
  else if(d.share){const p=PRODUCTS.find(x=>x.id==pid()),u=shareUrl();
   if(navigator.share){navigator.share({title:p.name,text:p.name+' · '+inr(p.price),url:u}).catch(()=>{})}
@@ -587,7 +593,9 @@ document.addEventListener('submit',async e=>{
  const f=Object.fromEntries(new FormData(e.target)),s=subtotal(),id='TDX-'+Math.floor(10000+Math.random()*90000);
  const bad=cart.find(i=>{const p=PRODUCTS.find(x=>x.id==i.id);return !p||isOut(p)||!okSel(p,i)});
  if(bad){const bp=PRODUCTS.find(x=>x.id==bad.id);btn.disabled=false;cart=cart.filter(i=>i!==bad);save();badge();toast((bp?bp.name:'Ek item')+' ab out of stock hai. Cart se hata diya gaya.');route();return}
- const items=cart.map(i=>{const p=PRODUCTS.find(x=>x.id==i.id)||{},cl=(p.cols&&cols(p)[i.c])||{};return {...i,name:p.name,sn:szName(p,i),cn:cl.n||'',ch:cl.h||'',price:lineUnit(i)}});
+ const over=cart.find(i=>{const p=PRODUCTS.find(x=>x.id==i.id),v=vget(p,i.s);return v&&v.stock!=null&&i.q>v.stock});
+ if(over){const p=PRODUCTS.find(x=>x.id==over.id),v=vget(p,over.s);over.q=v.stock;save();badge();btn.disabled=false;toast(p.name+': sirf '+v.stock+' available hain. Quantity update kar di.');route();return}
+ const items=cart.map(i=>{const p=PRODUCTS.find(x=>x.id==i.id)||{},cl=(p.cols&&cols(p)[i.c])||{};return {...i,name:p.name,sn:szName(p,i),cn:cl.n||'',ch:(vget(p,i.s)&&vget(p,i.s).nv)?'':(cl.h||''),price:lineUnit(i)}});
  const o={id,t:Date.now(),items,total:s+ship(s),pay:f.pay,name:f.name,addr:f.addr,city:f.city,pin:f.pin,status:'Placed'};
  let linked=false;
  if(sb){const row={id,customer_name:f.name,phone:f.phone,address:f.addr,city:f.city,pin:f.pin,payment:f.pay,items,total:o.total,status:'Placed'};
@@ -726,7 +734,7 @@ async function boot(){
   if(!p.error&&p.data)PRODUCTS=p.data.map(x=>({id:x.id,name:x.name,cat:x.category||'All',price:+x.price,desc:x.description||'',cols:(x.colors&&x.colors.length)?x.colors:['#2f78a8'],image_url:x.image_url,stock:x.stock,bg:tint((x.colors||[])[0])}));
   Object.assign(ST,Object.fromEntries((r.data||[]).map(x=>[x.key,x.value])));
   applyTheme(ST);try{localStorage.setItem('tx_theme',JSON.stringify(Object.fromEntries(THEME_KEYS.filter(k=>ST[k]).map(k=>[k,ST[k]]))))}catch(e){}
-  CATS=jl(ST.categories).filter(c=>c&&c.name);TREND=jl(ST.trending);BANNERS=jl(ST.banners).filter(b=>b&&b.title);PI=jo(ST.product_images);OFFERS=jo(ST.offers);PD=jo(ST.product_details);PV=jo(ST.product_variants);
+  CATS=jl(ST.categories).filter(c=>c&&c.name);TREND=jl(ST.trending);BANNERS=jl(ST.banners).filter(b=>b&&b.title);PI=jo(ST.product_images);OFFERS=jo(ST.offers);PD=jo(ST.product_details);PV=normPV(jo(ST.product_variants));
   ST.free=+(ST.free_delivery??ST.free);
   const rv=await sb.from('reviews').select('*').order('created_at',{ascending:false}).limit(1000);if(rv.data)REV=rv.data;ST.fee=+(ST.delivery_fee??ST.fee);
   const ids=orders.map(o=>o.id);
