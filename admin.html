@@ -131,12 +131,31 @@ async function load(){
  S.c=jl(S.s.categories).filter(c=>c&&c.name);S.t=jl(S.s.trending);S.b=jl(S.s.banners).filter(b=>b&&b.title);S.pi=jo(S.s.product_images);S.of=jo(S.s.offers);S.pd=jo(S.s.product_details);
 }
 async function start(){await load();draw()}
-const TABS=[['dash','Dashboard'],['ord','Orders'],['prod','Products'],['cats','Categories'],['rev','Reviews'],['sup','Support'],['look','Appearance']];
+const TABS=[['dash','Dashboard'],['ord','Orders'],['prod','Products'],['cats','Categories'],['rev','Reviews'],['sup','Support'],['look','Appearance'],['pwd','Password']];
 function draw(){
  const nav=TABS.map(([k,l])=>`<button class="${S.v==k?'on':''}" onclick="S.v='${k}';draw()">${k=='sup'&&S.tk.filter(t=>t.status=='Open').length?l+' ('+S.tk.filter(t=>t.status=='Open').length+')':l}</button>`).join('');
- const v={dash,prod,cats,ord,rev,sup,look}[S.v]();
+ const v={dash,prod,cats,ord,rev,sup,look,pwd}[S.v]();
  R.innerHTML=`<div class="side"><div class="logo">TRANDIXO</div>${nav}<button class="out" onclick="logout()">Log out</button></div><main>${v}</main><div class="bar">${nav}</div>`}
 
+function pwd(){return `<div class="top"><h1>Change password</h1></div><div class="box" style="max-width:460px"><p style="color:var(--mute);margin:0 0 14px">Aapka login email wahi rahega, sirf password badlega. Naya password kam se kam 8 characters ka rakhein.</p><label>Current password<input id="pw_o" type="password" autocomplete="current-password"></label><label>New password<input id="pw_n" type="password" autocomplete="new-password" minlength="8"></label><label>Confirm new password<input id="pw_c" type="password" autocomplete="new-password"></label><div class="err" id="pw_e" style="min-height:20px"></div><button class="btn" id="pw_b" onclick="pwSave()">Update password</button></div>`}
+async function pwSave(){
+ const e=m=>{$('#pw_e').textContent=m||''},o=$('#pw_o').value,n=$('#pw_n').value,c=$('#pw_c').value;e('');
+ if(!o||!n||!c)return e('Teeno fields bharein.');
+ if(n.length<8)return e('Naya password kam se kam 8 characters ka hona chahiye.');
+ if(n!==c)return e('Naya password aur confirm password match nahi kar rahe.');
+ if(n===o)return e('Naya password purane se alag rakhein.');
+ const b=$('#pw_b');b.disabled=true;b.textContent='Updating...';
+ try{
+  const {data:u,error:ue}=await sb.auth.getUser();
+  if(ue||!u||!u.user||!u.user.email)throw new Error('Session expire ho gaya. Dobara login karein.');
+  const v=await sb.auth.signInWithPassword({email:u.user.email,password:o});
+  if(v.error)throw new Error('Current password galat hai.');
+  const r=await sb.auth.updateUser({password:n});
+  if(r.error)throw new Error(r.error.message);
+  ['#pw_o','#pw_n','#pw_c'].forEach(i=>$(i).value='');
+  toast('Password updated');
+ }catch(x){e(x.message)}
+ b.disabled=false;b.textContent='Update password'}
 function dash(){
  const ok=S.o.filter(o=>o.status!='Cancelled'),rev=ok.reduce((a,o)=>a+Number(o.total),0),aov=ok.length?rev/ok.length:0;
  const days=[...Array(14)].map((_,i)=>{const d=new Date();d.setDate(d.getDate()-13+i);return d.toDateString()});
