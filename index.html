@@ -490,13 +490,14 @@ function cartPage(){
 function checkout(){
  if(!cart.length)return cartPage();
  if(!USER)return loginGate('Login to place your order','Please continue with Google to checkout. Your delivery details and orders are saved to your account.');
+ const v=Object.assign({},prof,CKF||{}),cod=v.pay=='Cash on delivery';CKF=null;
  return `<div class="wrap"><div class="sh" style="margin-top:28px"><h2>Checkout</h2></div><div class="two"><form id="cf" class="box"><h3>Delivery details</h3>
- <div class="f2"><label>Full name<input name="name" required value="${esc(prof.name)}" autocomplete="name"></label><label>Phone<input name="phone" required pattern="[0-9]{10}" inputmode="numeric" value="${esc(prof.phone)}" placeholder="10-digit number" autocomplete="tel"></label></div>
- <label>Address<textarea name="addr" rows="2" required autocomplete="street-address">${esc(prof.addr)}</textarea></label>
- <div class="f2"><label>City<input name="city" required value="${esc(prof.city)}"></label><label>PIN code<input name="pin" required pattern="[0-9]{6}" inputmode="numeric" value="${esc(prof.pin)}"></label></div>
- <h3 style="margin-top:8px">Payment</h3><div class="pay"><label><input type="radio" name="pay" value="Online" checked> Pay online (UPI, Cards, Netbanking, Wallets)</label><label><input type="radio" name="pay" value="Cash on delivery"> Cash on delivery</label></div>
- <button id="cbtn" class="btn block" style="margin-top:14px" data-t="${inr(subtotal()+ship(subtotal()))}">Place order · ${inr(subtotal()+ship(subtotal()))}</button></form>
- <div class="box"><h3>Your items</h3>${cart.map(i=>cartLine(i,0,0)).join('')}<div style="margin-top:8px">${summary()}</div></div></div></div>`}
+ <div class="f2"><label>Full name<input name="name" required value="${esc(v.name)}" autocomplete="name"></label><label>Phone<input name="phone" required pattern="[0-9]{10}" inputmode="numeric" value="${esc(v.phone)}" placeholder="10-digit number" autocomplete="tel"></label></div>
+ <label>Address<textarea name="addr" rows="2" required autocomplete="street-address">${esc(v.addr)}</textarea></label>
+ <div class="f2"><label>City<input name="city" required value="${esc(v.city)}"></label><label>PIN code<input name="pin" required pattern="[0-9]{6}" inputmode="numeric" value="${esc(v.pin)}"></label></div>
+ <h3 style="margin-top:8px">Payment</h3><div class="pay"><label><input type="radio" name="pay" value="Online" ${cod?'':'checked'}> Pay online (UPI, Cards, Netbanking, Wallets)</label><label><input type="radio" name="pay" value="Cash on delivery" ${cod?'checked':''}> Cash on delivery</label></div>
+ <button id="cbtn" class="btn block" style="margin-top:14px" data-t="${inr(subtotal()+ship(subtotal()))}">${cod?'Submit order':'Place order · '+inr(subtotal()+ship(subtotal()))}</button></form>
+ <div class="box"><h3>Your items</h3>${cart.map((i,x)=>cartLine(i,x,1)).join('')}<div style="margin-top:8px">${summary()}</div></div></div></div>`}
 const STEPS=['Placed','Packed','Shipped','Delivered'];
 function stage(o){if(o.status)return Math.max(0,STEPS.indexOf(o.status));const h=(Date.now()-o.t)/36e5;return h>72?3:h>36?2:h>6?1:0}
 function ordersPage(o2){
@@ -579,7 +580,7 @@ document.addEventListener('click',e=>{
  else if(d.wa){const p=PRODUCTS.find(x=>x.id==pid());window.open('https://wa.me/?text='+encodeURIComponent(p.name+' – '+inr(p.price)+'\n'+shareUrl()),'_blank')}
  else if(d.add){if(addCurrent())toast('Added to cart')}
  else if(d.buy){if(addCurrent())location.hash='#/checkout'}
- else if(d.rm!==undefined){cart.splice(+d.rm,1);save();route()}
+ else if(d.rm!==undefined){const cf=$('#cf');if(cf){const fd=Object.fromEntries(new FormData(cf));CKF={name:fd.name||'',phone:fd.phone||'',addr:fd.addr||'',city:fd.city||'',pin:fd.pin||'',pay:fd.pay||'Online'}}cart.splice(+d.rm,1);save();cf?route(1):route()}
  else if(d.qadd){const id=+d.qadd,p=PRODUCTS.find(x=>x.id==id);if(!p||isOut(p))return toast('Out of stock');const f=firstSel(p),k=cart.find(i=>i.id==id&&i.c==f.c&&i.s==f.s);k?k.q++:cart.push({id,c:f.c,s:f.s,q:1});save();badge();toast('Added to cart')}
  else if(d.srch){const r=$('#srow');r.hidden=!r.hidden;if(!r.hidden)$('#sq').focus()}
  else if(d.sl){const x=$('#tsl');x.scrollBy({left:+d.sl*x.clientWidth*.9,behavior:'smooth'})}
@@ -702,6 +703,13 @@ function afterLogin(){if(!OAUTH_RET)return;let a=null;try{a=sessionStorage.getIt
 const isOnl=o=>/^Online/.test(o.pay||'');
 const payTxt=o=>isOnl(o)?(o.pstatus=='Paid'?'Paid'+(o.pay.indexOf('·')>0?' · '+esc(o.pay.split('·')[1].trim()):' online'):'Online payment pending'):esc(o.pay);
 async function fnErr(r){if(r.data&&r.data.error)return r.data.error;try{if(r.error&&r.error.context&&r.error.context.json){const j=await r.error.context.json();return j.error||''}}catch(e){}return r.error?r.error.message:''}
+let CKF=null;
+document.head.insertAdjacentHTML('beforeend','<style>#pmodal{position:fixed;inset:0;background:rgba(0,0,0,.55);display:flex;align-items:center;justify-content:center;z-index:100;padding:20px;animation:pmf .2s}.pm-card{background:var(--card,#fff);border-radius:24px;max-width:420px;width:100%;padding:32px 26px;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,.3);animation:pmp .35s cubic-bezier(.2,1.2,.4,1)}.pm-ic{color:#1f9d63;margin-bottom:6px}.pm-ic.bad{color:#d63c4f}.pm-card h2{margin:6px 0 8px}.pm-card p{color:var(--mute);margin:0 0 20px;word-break:break-word}.pm-btns{display:flex;flex-direction:column;gap:10px}.pm-btns .btn{width:100%;margin:0}.pm-ic.ok path{stroke-dasharray:50;stroke-dashoffset:50;animation:pmd .5s .25s forwards}@keyframes pmf{from{opacity:0}}@keyframes pmp{from{transform:scale(.8);opacity:0}}@keyframes pmd{to{stroke-dashoffset:0}}</style>');
+function pmClose(){const m=document.getElementById('pmodal');if(m)m.remove();document.body.style.overflow=''}
+function pmOpen(id,html){pmClose();const m=document.createElement('div');m.id='pmodal';m.dataset.id=id||'';m.innerHTML='<div class="pm-card">'+html+'</div>';document.body.appendChild(m);document.body.style.overflow='hidden'}
+function showSuccess(id,total){pmOpen(id,`<div class="pm-ic ok"><svg viewBox="0 0 52 52" width="72" height="72" aria-hidden="true"><circle cx="26" cy="26" r="24" fill="none" stroke="currentColor" stroke-width="3"/><path d="M15 27l8 8 14-16" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/></svg></div><h2>Order placed successfully!</h2><p>We received your payment of <b>${inr(total)}</b>. Your order <b>${esc(id)}</b> is confirmed and will be packed soon.</p><div class="pm-btns"><button class="btn" data-pm="o">View my order</button><button class="btn ghost" data-pm="s">Continue shopping</button></div>`)}
+function showPayIssue(err,payId){pmOpen('',`<div class="pm-ic bad"><svg viewBox="0 0 52 52" width="72" height="72" aria-hidden="true"><circle cx="26" cy="26" r="24" fill="none" stroke="currentColor" stroke-width="3"/><path d="M17 17l18 18M35 17L17 35" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round"/></svg></div><h2>Payment received, order not confirmed yet</h2><p>Your payment (ID: <b>${esc(payId||'')}</b>) went through, but we could not save your order${err?': '+esc(err):''}.<br>Please do not pay again. Contact support with this payment ID.</p><div class="pm-btns"><button class="btn" data-pm="c">Contact support</button><button class="btn ghost" data-pm="x">Close</button></div>`)}
+document.addEventListener('click',e=>{const b=e.target.closest('[data-pm]');if(!b)return;const m=document.getElementById('pmodal'),id=m?m.dataset.id:'',k=b.dataset.pm;pmClose();if(k=='o')location.hash='#/orders/'+id;else if(k=='s')location.hash='#/shop';else if(k=='c')location.hash='#/support';else location.hash='#/orders'});
 async function payAndPlace(f,items,total,btn){
  const done=()=>{if(btn)btn.disabled=false};
  if(!sb||!USER){done();return toast('Please login to pay online')}
@@ -714,9 +722,18 @@ async function payAndPlace(f,items,total,btn){
   const rz=new Razorpay({key:d.key_id,amount:d.amount,currency:d.currency,order_id:d.razorpay_order_id,name:$('#lg').textContent||'Trandixo',description:'Your order',
    prefill:{name:f.name||'',email:USER.email||'',contact:f.phone||''},theme:{color:col},
    handler:async r=>{toast('Confirming payment…');
-    const v=await sb.functions.invoke('razorpay-verify',{body:{razorpay_payment_id:r.razorpay_payment_id,razorpay_order_id:r.razorpay_order_id,razorpay_signature:r.razorpay_signature}});
-    if(v.error||!v.data||v.data.error){done();toast('Payment received. Your order is being confirmed. Please check My orders in a minute and do not pay again.');setTimeout(()=>{location.hash='#/orders'},1500);return}
-    cart=[];save();await loadOrders();location.hash='#/orders/'+v.data.order_id},
+    const body={razorpay_payment_id:r.razorpay_payment_id,razorpay_order_id:r.razorpay_order_id,razorpay_signature:r.razorpay_signature};
+    let v=null,err='';
+    for(let t=0;t<3;t++){
+     v=await sb.functions.invoke('razorpay-verify',{body});
+     if(!v.error&&v.data&&!v.data.error)break;
+     err=(await fnErr(v))||'Unknown error';
+     if(/signature|does not match|not found|login/i.test(err))break;
+     await new Promise(z=>setTimeout(z,2000));
+    }
+    done();
+    if(v&&!v.error&&v.data&&!v.data.error){cart=[];save();badge();showSuccess(v.data.order_id,total);loadOrders().then(()=>route(1));return}
+    showPayIssue(err,r.razorpay_payment_id)},
    modal:{ondismiss:()=>{done();toast('Payment not completed. Your order was not placed.')}}});
   rz.on('payment.failed',r=>{toast((r.error&&r.error.description)||'Payment failed. Please try again.')});
   rz.open();
