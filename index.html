@@ -5,6 +5,7 @@
 <title>Trandixo – Handmade Bags, Clothing &amp; Accessories</title>
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
+<script src="https://checkout.razorpay.com/v1/checkout.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;600;700&family=Dancing+Script:wght@500&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
 <style>
@@ -493,16 +494,16 @@ function checkout(){
  <div class="f2"><label>Full name<input name="name" required value="${esc(prof.name)}" autocomplete="name"></label><label>Phone<input name="phone" required pattern="[0-9]{10}" inputmode="numeric" value="${esc(prof.phone)}" placeholder="10-digit number" autocomplete="tel"></label></div>
  <label>Address<textarea name="addr" rows="2" required autocomplete="street-address">${esc(prof.addr)}</textarea></label>
  <div class="f2"><label>City<input name="city" required value="${esc(prof.city)}"></label><label>PIN code<input name="pin" required pattern="[0-9]{6}" inputmode="numeric" value="${esc(prof.pin)}"></label></div>
- <h3 style="margin-top:8px">Payment</h3><div class="pay"><label><input type="radio" name="pay" value="Cash on delivery" checked> Cash on delivery</label><label><input type="radio" name="pay" value="UPI"> UPI</label><label><input type="radio" name="pay" value="Card"> Card</label></div>
+ <h3 style="margin-top:8px">Payment</h3><div class="pay"><label><input type="radio" name="pay" value="Online" checked> Pay online (UPI, Cards, Netbanking, Wallets)</label><label><input type="radio" name="pay" value="Cash on delivery"> Cash on delivery</label></div>
  <button class="btn block" style="margin-top:14px">Place order · ${inr(subtotal()+ship(subtotal()))}</button></form>
  <div class="box"><h3>Your items</h3>${cart.map(i=>cartLine(i,0,0)).join('')}<div style="margin-top:8px">${summary()}</div></div></div></div>`}
 const STEPS=['Placed','Packed','Shipped','Delivered'];
 function stage(o){if(o.status)return Math.max(0,STEPS.indexOf(o.status));const h=(Date.now()-o.t)/36e5;return h>72?3:h>36?2:h>6?1:0}
 function ordersPage(o2){
  if(!USER)return loginGate('Login to see your orders','Continue with Google to view your orders and their delivery status on any device.');
- const done=o2?`<div class="box" style="margin:28px 0;text-align:center"><div class="ok-ic">✓</div><h2>Order placed</h2><p style="color:var(--mute);margin:6px 0 0">Thanks! Order ${o2} is confirmed. You can track it below.</p></div>`:'';
+ const done=o2?`<div class="box" style="margin:28px 0;text-align:center"><div class="ok-ic">✓</div><h2>Order placed</h2><p style="color:var(--mute);margin:6px 0 0">${(()=>{const x=myOrders().find(q=>q.id==o2);return x&&unpaid(x)?`Order ${o2} is created. Complete the payment below to confirm it.`:`Thanks! Order ${o2} is confirmed. You can track it below.`})()}</p></div>`:'';
  const OL=myOrders();if(!OL.length)return `<div class="wrap empty"><h2>No orders yet</h2><p>Your orders and their delivery status will appear here.</p><a class="btn" href="#/shop">Shop totes</a></div>`;
- return `<div class="wrap">${done}<div class="sh" style="margin-top:${o2?0:28}px"><h2>My orders</h2></div><div style="padding-bottom:48px">${OL.map(o=>{const s=stage(o);return `<div class="box ord"><div class="oh"><div><b>${o.id}</b><div style="color:var(--mute);font-size:14px">${new Date(o.t).toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'numeric'})} · ${o.pay}</div></div><span class="badge ${o.status=='Cancelled'?'off':s==3?'ok':''}">${o.status=='Cancelled'?'Cancelled':STEPS[s]}</span></div>${o.items.map(i=>cartLine(i,0,0)).join('')}${o.status!='Delivered'?'':[...new Set(o.items.map(i=>i.id))].filter(id=>PRODUCTS.some(x=>x.id==id)).map(id=>`<a class="btn ghost sm" style="margin:4px 8px 4px 0" href="#/review/${id}">★ Review ${esc(PRODUCTS.find(x=>x.id==id).name)}</a>`).join('')}${o.status=='Cancelled'?'':`<div class="trk">${STEPS.map((x,k)=>`<div class="${k<=s?'d':''}">${x}</div>`).join('')}</div>`}<div class="row t"><span>Total</span><span>${inr(o.total)}</span></div><div style="color:var(--mute);font-size:14px">Deliver to: ${o.name}, ${o.addr}, ${o.city} ${o.pin}</div><div style="margin-top:10px"><a class="btn ghost sm" href="#/support/new/${esc(o.id)}">Need help with this order?</a></div></div>`}).join('')}</div></div>`}
+ return `<div class="wrap">${done}<div class="sh" style="margin-top:${o2?0:28}px"><h2>My orders</h2></div><div style="padding-bottom:48px">${OL.map(o=>{const s=stage(o);return `<div class="box ord"><div class="oh"><div><b>${o.id}</b><div style="color:var(--mute);font-size:14px">${new Date(o.t).toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'numeric'})} · ${payTxt(o)}</div></div><span class="badge ${o.status=='Cancelled'||unpaid(o)?'off':s==3?'ok':''}">${o.status=='Cancelled'?'Cancelled':unpaid(o)?'Payment pending':STEPS[s]}</span></div>${o.items.map(i=>cartLine(i,0,0)).join('')}${o.status!='Delivered'?'':[...new Set(o.items.map(i=>i.id))].filter(id=>PRODUCTS.some(x=>x.id==id)).map(id=>`<a class="btn ghost sm" style="margin:4px 8px 4px 0" href="#/review/${id}">★ Review ${esc(PRODUCTS.find(x=>x.id==id).name)}</a>`).join('')}${o.status=='Cancelled'?'':`<div class="trk">${STEPS.map((x,k)=>`<div class="${k<=s?'d':''}">${x}</div>`).join('')}</div>`}<div class="row t"><span>Total</span><span>${inr(o.total)}</span></div><div style="color:var(--mute);font-size:14px">Deliver to: ${o.name}, ${o.addr}, ${o.city} ${o.pin}</div>${unpaid(o)?`<div style="margin-top:12px"><button class="btn sm" data-pay="${esc(o.id)}">Pay ${inr(o.total)} now</button></div>`:''}<div style="margin-top:10px"><a class="btn ghost sm" href="#/support/new/${esc(o.id)}">Need help with this order?</a></div></div>`}).join('')}</div></div>`}
 function loginGate(t,m){return `<div class="wrap"><div class="sh" style="margin-top:28px"><h2>Login</h2></div>${loginCard(t,m)}<div style="height:48px"></div></div>`}
 function loginCard(t,m){return `<div class="box" style="margin-top:8px;text-align:center;max-width:540px;margin-left:auto;margin-right:auto"><h3 style="font-size:22px">${t?esc(t):'Login to '+esc($('#lg').textContent||'Trandixo')}</h3><p style="color:var(--mute);margin:8px 0 16px">${m?esc(m):'Save your details for faster checkout, see your orders on any device and get quick help from our support team.'}</p><button class="btn gbtn" data-glogin="1">${GOOGLE} Continue with Google</button><p style="color:var(--mute);font-size:12px;margin:12px 0 0">We only use your name, email and photo.</p></div>`}
 function profilePage(){
@@ -537,7 +538,7 @@ const PAGES=Object.assign(Object.create(null),{
  about:['About us',()=>`<p>TRANDIXO makes handmade tote bags. Every bag is cut, stitched and finished by hand in small batches of 20 or fewer.</p><h3>What we use</h3><p>Cotton canvas, natural jute and recycled denim, with cotton lining and double-stitched straps that carry real weight.</p><h3>Why small batches</h3><p>A bag stitched by one person holds up better and carries a little character, so no two bags are exactly alike.</p><p style="margin-top:16px"><a class="btn" href="#/shop">Shop totes</a></p>`],
  shipping:['Shipping policy',()=>`<h3>Dispatch</h3><p>Orders are packed and shipped within 2–4 days.</p><h3>Delivery charges</h3><p>Delivery is free on orders of ${inr(ST.free)} and above. Below that, a flat delivery fee of ${inr(ST.fee)} applies.</p><h3>Payment options</h3><p>Cash on delivery, UPI and card.</p><h3>Tracking</h3><p>Use the <a href="#/track" style="color:var(--blue)">Track Your Order</a> page with your order ID to see whether your order is Placed, Packed, Shipped or Delivered. Orders placed from your account are listed under My orders.</p><h3>Delivery details</h3><p>Please check your address, PIN code and phone number at checkout. Once a parcel has shipped we can't change the address.</p>`],
  returns:['Return & refund policy',()=>`<h3>7-day returns</h3><p>If your bag isn't right, you can send it back within 7 days of delivery.</p><h3>Conditions</h3><ul><li>The bag must be unused, unwashed and in its original condition.</li><li>Handmade bags can vary slightly in stitching, print and shade. This is part of the product and not a defect.</li></ul><h3>How to return</h3><p>Contact us from the <a href="#/contact" style="color:var(--blue)">Contact / Support</a> page with your order ID and a photo. We'll confirm the return and share the pickup or shipping details.</p><h3>Refunds</h3><p>Once we receive and check the bag, the refund goes to your original payment method. For cash on delivery orders we refund by UPI or bank transfer.</p><h3>Cancellations</h3><p>You can cancel an order before it ships by contacting us with your order ID.</p>`],
- privacy:['Privacy policy',()=>`<h3>What we collect</h3><p>Your name, phone number, delivery address, the items you order, and any review you write.</p><h3>How we use it</h3><p>To deliver your order, update you about it, handle returns and support, and show reviews on product pages.</p><h3>Where it is stored</h3><p>Orders and reviews are stored with our database provider. Your cart and wishlist stay in your own browser. Your profile details and orders are linked to your Google account (we only receive your name, email and photo), and you can clear your saved address any time from the Profile page.</p><h3>Payments</h3><p>We don't store card numbers on this site.</p><h3>Sharing</h3><p>We don't sell your data. We share your name, phone and address only with the courier that delivers your order.</p><h3>Questions or deletion requests</h3><p>Reach us through the <a href="#/contact" style="color:var(--blue)">Contact / Support</a> page.</p>`],
+ privacy:['Privacy policy',()=>`<h3>What we collect</h3><p>Your name, phone number, delivery address, the items you order, and any review you write.</p><h3>How we use it</h3><p>To deliver your order, update you about it, handle returns and support, and show reviews on product pages.</p><h3>Where it is stored</h3><p>Orders and reviews are stored with our database provider. Your cart and wishlist stay in your own browser. Your profile details and orders are linked to your Google account (we only receive your name, email and photo), and you can clear your saved address any time from the Profile page.</p><h3>Payments</h3><p>Online payments are processed securely by Razorpay. We don't store your card, UPI or bank details on this site.</p><h3>Sharing</h3><p>We don't sell your data. We share your name, phone and address only with the courier that delivers your order.</p><h3>Questions or deletion requests</h3><p>Reach us through the <a href="#/contact" style="color:var(--blue)">Contact / Support</a> page.</p>`],
  terms:['Terms & conditions',()=>`<h3>Using this site</h3><p>By placing an order you agree to these terms.</p><h3>Products and prices</h3><p>All prices are in Indian rupees (₹). Bags are handmade, so small differences in size, stitching, print and colour are normal. Colours may also look slightly different on your screen.</p><h3>Orders</h3><p>An order is confirmed when you receive an order ID. We may cancel an order if an item is out of stock or the details are incomplete. In that case we'll let you know and refund any payment made.</p><h3>Delivery, returns and refunds</h3><p>See our <a href="#/shipping" style="color:var(--blue)">Shipping Policy</a> and <a href="#/returns" style="color:var(--blue)">Return &amp; Refund Policy</a>.</p><h3>Reviews</h3><p>Reviews must be honest and respectful. We may remove reviews that are abusive or unrelated to the product.</p><h3>Changes</h3><p>We may update these terms from time to time. The version on this page is the one that applies.</p>`],
  contact:['Contact / Support',()=>{const wa=waLink();return `<p>Questions about an order, a return or a bag? We're happy to help. Please keep your order ID handy.</p><div class="box" style="margin:16px 0"><div class="row"><span>Phone</span><b>${esc(info('phone'))}</b></div><div class="row"><span>Email</span><b>${esc(info('email'))}</b></div><div class="row"><span>Address</span><b style="text-align:right">${esc(info('address'))}</b></div><div class="row"><span>Hours</span><b>${esc(info('hours'))}</b></div></div><div class="share"><a class="btn" href="mailto:${esc(info('email'))}">Email us</a>${wa?`<a class="btn ghost" href="${wa}" target="_blank" rel="noopener">WhatsApp</a>`:''}<a class="btn ghost" href="#/support">Support request</a></div>`}]
 });
@@ -601,7 +602,7 @@ document.addEventListener('submit',async e=>{
  const over=cart.find(i=>{const p=PRODUCTS.find(x=>x.id==i.id),v=vget(p,i.s);return v&&v.stock!=null&&i.q>v.stock});
  if(over){const p=PRODUCTS.find(x=>x.id==over.id),v=vget(p,over.s);over.q=v.stock;save();badge();btn.disabled=false;toast(p.name+': sirf '+v.stock+' available hain. Quantity update kar di.');route();return}
  const items=cart.map(i=>{const p=PRODUCTS.find(x=>x.id==i.id)||{},cl=(p.cols&&cols(p)[i.c])||{};return {...i,name:p.name,sn:szName(p,i),cn:cl.n||'',ch:(vget(p,i.s)&&vget(p,i.s).nv)?'':(cl.h||''),price:lineUnit(i)}});
- const o={id,t:Date.now(),items,total:s+ship(s),pay:f.pay,name:f.name,addr:f.addr,city:f.city,pin:f.pin,status:'Placed'};
+ const o={id,t:Date.now(),items,total:s+ship(s),pay:f.pay,pstatus:f.pay=='Online'?'Pending':'COD',name:f.name,addr:f.addr,city:f.city,pin:f.pin,status:'Placed'};
  let linked=false;
  if(sb){const row={id,customer_name:f.name,phone:f.phone,address:f.addr,city:f.city,pin:f.pin,payment:f.pay,items,total:o.total,status:'Placed'};
   if(USER){row.user_id=USER.id;row.email=USER.email;linked=true}
@@ -609,7 +610,7 @@ document.addEventListener('submit',async e=>{
   if(r.error&&linked&&/user_id|email/i.test(r.error.message)){linked=false;delete row.user_id;delete row.email;r=await sb.from('orders').insert(row)}
   if(r.error){btn.disabled=false;return toast('Order failed: '+r.error.message)}}
  if(!prof.addr)await saveProf({name:prof.name||f.name,phone:f.phone,addr:f.addr,city:f.city,pin:f.pin},1);
- CO.unshift(o);cart=[];save();location.hash='#/orders/'+id;
+ CO.unshift(o);cart=[];save();location.hash='#/orders/'+id;if(f.pay=='Online')payOrder(id);
 });
 document.addEventListener('submit',async e=>{
  if(e.target.id!='pf')return;e.preventDefault();const p=Object.fromEntries(new FormData(e.target));
@@ -661,7 +662,7 @@ const OAUTH_RET=/[?&](code|error)=/.test(location.search);
 let USER=null,CO=[],TK=[],TKM={},TKL=false,SUPERR=false,booted=false;
 const GOOGLE='<svg width="20" height="20" viewBox="0 0 48 48" aria-hidden="true"><path fill="#EA4335" d="M24 9.5c3.5 0 6.6 1.2 9.1 3.6l6.8-6.8C35.9 2.4 30.4 0 24 0 14.6 0 6.5 5.4 2.6 13.2l7.9 6.1C12.4 13.5 17.7 9.5 24 9.5z"/><path fill="#4285F4" d="M46.5 24.5c0-1.6-.1-3.1-.4-4.5H24v9h12.7c-.6 3-2.3 5.5-4.8 7.2l7.6 5.9c4.4-4.1 7-10.1 7-17.6z"/><path fill="#FBBC05" d="M10.5 28.7c-.5-1.5-.8-3-.8-4.7s.3-3.2.8-4.7l-7.9-6.1C.9 16.4 0 20.1 0 24s.9 7.6 2.6 10.8l7.9-6.1z"/><path fill="#34A853" d="M24 48c6.5 0 11.9-2.1 15.9-5.8l-7.6-5.9c-2.1 1.4-4.9 2.3-8.3 2.3-6.3 0-11.6-4-13.5-9.8l-7.9 6.1C6.5 42.6 14.6 48 24 48z"/></svg>';
 const fdt=t=>new Date(t).toLocaleString('en-IN',{day:'numeric',month:'short',hour:'numeric',minute:'2-digit'});
-const mapOrder=r=>({id:r.id,t:new Date(r.created_at).getTime(),items:jl(r.items),total:+r.total,pay:r.payment,name:r.customer_name,addr:r.address,city:r.city,pin:r.pin,status:r.status||'Placed'});
+const mapOrder=r=>({id:r.id,t:new Date(r.created_at).getTime(),items:jl(r.items),total:+r.total,pay:r.payment,name:r.customer_name,addr:r.address,city:r.city,pin:r.pin,status:r.status||'Placed',pstatus:r.payment_status||''});
 function myOrders(){return USER?CO:[]}
 async function gLogin(){if(!sb)return toast('Login is not available right now');
  try{sessionStorage.setItem('tx_after',location.hash||'#/profile')}catch(e){}
@@ -687,7 +688,8 @@ async function setUser(u){const was=USER&&USER.id,now=u&&u.id;if(was==now){USER=
  USER=u||null;CO=[];TK=[];TKM={};TKL=false;
  if(USER){await loadProfile();await loadOrders()}else prof={};
  hdr();if(booted)route(1)}
-async function authInit(){if(!sb)return;
+async function authInit(){if(/^#error=/.test(location.hash)){try{const p=new URLSearchParams(location.hash.slice(1));setTimeout(()=>toast(p.get('error_description')||'Login failed. Please try again.'),600);history.replaceState(null,'',location.pathname+'#/')}catch(e){location.hash='#/'}}
+ if(!sb)return;
  try{const q=new URLSearchParams(location.search);if(q.get('error_description'))setTimeout(()=>toast(q.get('error_description')),600);
   const {data}=await sb.auth.getSession();await setUser(data.session&&data.session.user)}catch(e){}
  try{sb.auth.onAuthStateChange((ev,se)=>{setTimeout(()=>setUser(se&&se.user),0)})}catch(e){}
@@ -695,9 +697,35 @@ async function authInit(){if(!sb)return;
 function afterLogin(){if(!OAUTH_RET)return;let a=null;try{a=sessionStorage.getItem('tx_after');sessionStorage.removeItem('tx_after')}catch(e){}
  if(USER){toast('Welcome'+(prof.name?', '+prof.name.split(' ')[0]:'')+'!');if(a&&a!=location.hash&&/^#\//.test(a))location.hash=a}}
 
+/* ----- online payments (Razorpay) ----- */
+const isOnl=o=>/^Online/.test(o.pay||'');
+const unpaid=o=>isOnl(o)&&o.pstatus!=='Paid'&&o.status!='Cancelled';
+const payTxt=o=>isOnl(o)?(o.pstatus=='Paid'?'Paid'+(o.pay.indexOf('·')>0?' · '+esc(o.pay.split('·')[1].trim()):' online'):'Online payment pending'):esc(o.pay);
+async function fnErr(r){if(r.data&&r.data.error)return r.data.error;try{if(r.error&&r.error.context&&r.error.context.json){const j=await r.error.context.json();return j.error||''}}catch(e){}return r.error?r.error.message:''}
+let PAYING=false;
+async function payOrder(id){
+ if(PAYING)return;const o=myOrders().find(x=>x.id==id);if(!sb||!USER||!o)return toast('Please login to pay for this order');
+ PAYING=true;toast('Opening payment…');
+ try{
+  const c=await sb.functions.invoke('razorpay-create-order',{body:{order_id:id}});
+  if(c.error||!c.data||c.data.error){PAYING=false;return toast((await fnErr(c))||'Could not start payment. Please try again from My orders.')}
+  if(!window.Razorpay){PAYING=false;return toast('Payment window could not load. Check your internet and try again.')}
+  const d=c.data,col=(getComputedStyle(document.documentElement).getPropertyValue('--blue')||'').trim()||'#2f78a8';
+  const rz=new Razorpay({key:d.key_id,amount:d.amount,currency:d.currency,order_id:d.razorpay_order_id,name:$('#lg').textContent||'Trandixo',description:'Order '+id,
+   prefill:{name:prof.name||o.name||'',email:USER.email||'',contact:prof.phone||''},theme:{color:col},
+   handler:async r=>{toast('Confirming payment…');
+    const v=await sb.functions.invoke('razorpay-verify',{body:{order_id:id,razorpay_payment_id:r.razorpay_payment_id,razorpay_order_id:r.razorpay_order_id,razorpay_signature:r.razorpay_signature}});
+    PAYING=false;toast(v.error||(v.data&&v.data.error)?'Payment received. Your order will be confirmed shortly.':'Payment successful!');
+    await loadOrders();route(1)},
+   modal:{ondismiss:()=>{PAYING=false;toast('Payment not completed. You can pay from My orders.')}}});
+  rz.on('payment.failed',r=>{toast((r.error&&r.error.description)||'Payment failed. Please try again.')});
+  rz.open();
+ }catch(e){PAYING=false;toast('Payment error. Please try again.')}}
+document.addEventListener('click',e=>{const b=e.target.closest('[data-pay]');if(!b)return;e.preventDefault();payOrder(b.dataset.pay)});
+
 /* ----- support ----- */
 const TOPICS=['Order issue','Delivery','Return & refund','Product question','Payment','Other'];
-const FAQ=[['How long does delivery take?',()=>`Orders are packed and shipped within 2–4 days. Delivery is free above ${inr(ST.free)}; below that a flat ${inr(ST.fee)} fee applies.`],['How do I track my order?',()=>'Open <a href="#/orders" style="color:var(--blue)">My orders</a> or use <a href="#/track" style="color:var(--blue)">Track order</a> with your order ID (like TDX-12345).'],['Can I return a bag?',()=>'Yes, within 7 days of delivery if it is unused and in original condition. See the <a href="#/returns" style="color:var(--blue)">return policy</a>.'],['Which payment options are available?',()=>'Cash on delivery, UPI and Card.'],['I need to change my address or cancel',()=>'Raise a request or WhatsApp us as soon as possible, before the order is shipped.']];
+const FAQ=[['How long does delivery take?',()=>`Orders are packed and shipped within 2–4 days. Delivery is free above ${inr(ST.free)}; below that a flat ${inr(ST.fee)} fee applies.`],['How do I track my order?',()=>'Open <a href="#/orders" style="color:var(--blue)">My orders</a> or use <a href="#/track" style="color:var(--blue)">Track order</a> with your order ID (like TDX-12345).'],['Can I return a bag?',()=>'Yes, within 7 days of delivery if it is unused and in original condition. See the <a href="#/returns" style="color:var(--blue)">return policy</a>.'],['Which payment options are available?',()=>'Pay online (UPI, Cards, Netbanking, Wallets via Razorpay) or Cash on delivery.'],['I need to change my address or cancel',()=>'Raise a request or WhatsApp us as soon as possible, before the order is shipped.']];
 const stBadge=t=>`<span class="badge ${t=='Resolved'||t=='Closed'?'ok':''}">${esc(t)}</span>`;
 function supportPage(id,oid){
  if(id&&id!='new')return ticketPage(+id);
