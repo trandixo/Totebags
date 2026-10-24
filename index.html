@@ -495,15 +495,15 @@ function checkout(){
  <label>Address<textarea name="addr" rows="2" required autocomplete="street-address">${esc(prof.addr)}</textarea></label>
  <div class="f2"><label>City<input name="city" required value="${esc(prof.city)}"></label><label>PIN code<input name="pin" required pattern="[0-9]{6}" inputmode="numeric" value="${esc(prof.pin)}"></label></div>
  <h3 style="margin-top:8px">Payment</h3><div class="pay"><label><input type="radio" name="pay" value="Online" checked> Pay online (UPI, Cards, Netbanking, Wallets)</label><label><input type="radio" name="pay" value="Cash on delivery"> Cash on delivery</label></div>
- <button class="btn block" style="margin-top:14px">Place order · ${inr(subtotal()+ship(subtotal()))}</button></form>
+ <button id="cbtn" class="btn block" style="margin-top:14px" data-t="${inr(subtotal()+ship(subtotal()))}">Place order · ${inr(subtotal()+ship(subtotal()))}</button></form>
  <div class="box"><h3>Your items</h3>${cart.map(i=>cartLine(i,0,0)).join('')}<div style="margin-top:8px">${summary()}</div></div></div></div>`}
 const STEPS=['Placed','Packed','Shipped','Delivered'];
 function stage(o){if(o.status)return Math.max(0,STEPS.indexOf(o.status));const h=(Date.now()-o.t)/36e5;return h>72?3:h>36?2:h>6?1:0}
 function ordersPage(o2){
  if(!USER)return loginGate('Login to see your orders','Continue with Google to view your orders and their delivery status on any device.');
- const done=o2?`<div class="box" style="margin:28px 0;text-align:center"><div class="ok-ic">✓</div><h2>Order placed</h2><p style="color:var(--mute);margin:6px 0 0">${(()=>{const x=myOrders().find(q=>q.id==o2);return x&&unpaid(x)?`Order ${o2} is created. Complete the payment below to confirm it.`:`Thanks! Order ${o2} is confirmed. You can track it below.`})()}</p></div>`:'';
+ const done=o2?`<div class="box" style="margin:28px 0;text-align:center"><div class="ok-ic">✓</div><h2>Order placed</h2><p style="color:var(--mute);margin:6px 0 0">Thanks! Order ${o2} is confirmed. You can track it below.</p></div>`:'';
  const OL=myOrders();if(!OL.length)return `<div class="wrap empty"><h2>No orders yet</h2><p>Your orders and their delivery status will appear here.</p><a class="btn" href="#/shop">Shop totes</a></div>`;
- return `<div class="wrap">${done}<div class="sh" style="margin-top:${o2?0:28}px"><h2>My orders</h2></div><div style="padding-bottom:48px">${OL.map(o=>{const s=stage(o);return `<div class="box ord"><div class="oh"><div><b>${o.id}</b><div style="color:var(--mute);font-size:14px">${new Date(o.t).toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'numeric'})} · ${payTxt(o)}</div></div><span class="badge ${o.status=='Cancelled'||unpaid(o)?'off':s==3?'ok':''}">${o.status=='Cancelled'?'Cancelled':unpaid(o)?'Payment pending':STEPS[s]}</span></div>${o.items.map(i=>cartLine(i,0,0)).join('')}${o.status!='Delivered'?'':[...new Set(o.items.map(i=>i.id))].filter(id=>PRODUCTS.some(x=>x.id==id)).map(id=>`<a class="btn ghost sm" style="margin:4px 8px 4px 0" href="#/review/${id}">★ Review ${esc(PRODUCTS.find(x=>x.id==id).name)}</a>`).join('')}${o.status=='Cancelled'?'':`<div class="trk">${STEPS.map((x,k)=>`<div class="${k<=s?'d':''}">${x}</div>`).join('')}</div>`}<div class="row t"><span>Total</span><span>${inr(o.total)}</span></div><div style="color:var(--mute);font-size:14px">Deliver to: ${o.name}, ${o.addr}, ${o.city} ${o.pin}</div>${unpaid(o)?`<div style="margin-top:12px"><button class="btn sm" data-pay="${esc(o.id)}">Pay ${inr(o.total)} now</button></div>`:''}<div style="margin-top:10px"><a class="btn ghost sm" href="#/support/new/${esc(o.id)}">Need help with this order?</a></div></div>`}).join('')}</div></div>`}
+ return `<div class="wrap">${done}<div class="sh" style="margin-top:${o2?0:28}px"><h2>My orders</h2></div><div style="padding-bottom:48px">${OL.map(o=>{const s=stage(o);return `<div class="box ord"><div class="oh"><div><b>${o.id}</b><div style="color:var(--mute);font-size:14px">${new Date(o.t).toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'numeric'})} · ${payTxt(o)}</div></div><span class="badge ${o.status=='Cancelled'?'off':s==3?'ok':''}">${o.status=='Cancelled'?'Cancelled':STEPS[s]}</span></div>${o.items.map(i=>cartLine(i,0,0)).join('')}${o.status!='Delivered'?'':[...new Set(o.items.map(i=>i.id))].filter(id=>PRODUCTS.some(x=>x.id==id)).map(id=>`<a class="btn ghost sm" style="margin:4px 8px 4px 0" href="#/review/${id}">★ Review ${esc(PRODUCTS.find(x=>x.id==id).name)}</a>`).join('')}${o.status=='Cancelled'?'':`<div class="trk">${STEPS.map((x,k)=>`<div class="${k<=s?'d':''}">${x}</div>`).join('')}</div>`}<div class="row t"><span>Total</span><span>${inr(o.total)}</span></div><div style="color:var(--mute);font-size:14px">Deliver to: ${o.name}, ${o.addr}, ${o.city} ${o.pin}</div><div style="margin-top:10px"><a class="btn ghost sm" href="#/support/new/${esc(o.id)}">Need help with this order?</a></div></div>`}).join('')}</div></div>`}
 function loginGate(t,m){return `<div class="wrap"><div class="sh" style="margin-top:28px"><h2>Login</h2></div>${loginCard(t,m)}<div style="height:48px"></div></div>`}
 function loginCard(t,m){return `<div class="box" style="margin-top:8px;text-align:center;max-width:540px;margin-left:auto;margin-right:auto"><h3 style="font-size:22px">${t?esc(t):'Login to '+esc($('#lg').textContent||'Trandixo')}</h3><p style="color:var(--mute);margin:8px 0 16px">${m?esc(m):'Save your details for faster checkout, see your orders on any device and get quick help from our support team.'}</p><button class="btn gbtn" data-glogin="1">${GOOGLE} Continue with Google</button><p style="color:var(--mute);font-size:12px;margin:12px 0 0">We only use your name, email and photo.</p></div>`}
 function profilePage(){
@@ -602,6 +602,7 @@ document.addEventListener('submit',async e=>{
  const over=cart.find(i=>{const p=PRODUCTS.find(x=>x.id==i.id),v=vget(p,i.s);return v&&v.stock!=null&&i.q>v.stock});
  if(over){const p=PRODUCTS.find(x=>x.id==over.id),v=vget(p,over.s);over.q=v.stock;save();badge();btn.disabled=false;toast(p.name+': sirf '+v.stock+' available hain. Quantity update kar di.');route();return}
  const items=cart.map(i=>{const p=PRODUCTS.find(x=>x.id==i.id)||{},cl=(p.cols&&cols(p)[i.c])||{};return {...i,name:p.name,sn:szName(p,i),cn:cl.n||'',ch:(vget(p,i.s)&&vget(p,i.s).nv)?'':(cl.h||''),price:lineUnit(i)}});
+ if(f.pay=='Online'){await payAndPlace(f,items,s+ship(s),btn);return}
  const o={id,t:Date.now(),items,total:s+ship(s),pay:f.pay,pstatus:f.pay=='Online'?'Pending':'COD',name:f.name,addr:f.addr,city:f.city,pin:f.pin,status:'Placed'};
  let linked=false;
  if(sb){const row={id,customer_name:f.name,phone:f.phone,address:f.addr,city:f.city,pin:f.pin,payment:f.pay,items,total:o.total,status:'Placed'};
@@ -610,7 +611,7 @@ document.addEventListener('submit',async e=>{
   if(r.error&&linked&&/user_id|email/i.test(r.error.message)){linked=false;delete row.user_id;delete row.email;r=await sb.from('orders').insert(row)}
   if(r.error){btn.disabled=false;return toast('Order failed: '+r.error.message)}}
  if(!prof.addr)await saveProf({name:prof.name||f.name,phone:f.phone,addr:f.addr,city:f.city,pin:f.pin},1);
- CO.unshift(o);cart=[];save();location.hash='#/orders/'+id;if(f.pay=='Online')payOrder(id);
+ CO.unshift(o);cart=[];save();location.hash='#/orders/'+id;
 });
 document.addEventListener('submit',async e=>{
  if(e.target.id!='pf')return;e.preventDefault();const p=Object.fromEntries(new FormData(e.target));
@@ -697,31 +698,30 @@ async function authInit(){if(/^#error=/.test(location.hash)){try{const p=new URL
 function afterLogin(){if(!OAUTH_RET)return;let a=null;try{a=sessionStorage.getItem('tx_after');sessionStorage.removeItem('tx_after')}catch(e){}
  if(USER){toast('Welcome'+(prof.name?', '+prof.name.split(' ')[0]:'')+'!');if(a&&a!=location.hash&&/^#\//.test(a))location.hash=a}}
 
-/* ----- online payments (Razorpay) ----- */
+/* ----- online payments (Razorpay): order is created only AFTER payment succeeds ----- */
 const isOnl=o=>/^Online/.test(o.pay||'');
-const unpaid=o=>isOnl(o)&&o.pstatus!=='Paid'&&o.status!='Cancelled';
 const payTxt=o=>isOnl(o)?(o.pstatus=='Paid'?'Paid'+(o.pay.indexOf('·')>0?' · '+esc(o.pay.split('·')[1].trim()):' online'):'Online payment pending'):esc(o.pay);
 async function fnErr(r){if(r.data&&r.data.error)return r.data.error;try{if(r.error&&r.error.context&&r.error.context.json){const j=await r.error.context.json();return j.error||''}}catch(e){}return r.error?r.error.message:''}
-let PAYING=false;
-async function payOrder(id){
- if(PAYING)return;const o=myOrders().find(x=>x.id==id);if(!sb||!USER||!o)return toast('Please login to pay for this order');
- PAYING=true;toast('Opening payment…');
+async function payAndPlace(f,items,total,btn){
+ const done=()=>{if(btn)btn.disabled=false};
+ if(!sb||!USER){done();return toast('Please login to pay online')}
+ if(!window.Razorpay){done();return toast('Payment window could not load. Check your internet and try again.')}
+ toast('Opening payment…');
  try{
-  const c=await sb.functions.invoke('razorpay-create-order',{body:{order_id:id}});
-  if(c.error||!c.data||c.data.error){PAYING=false;return toast((await fnErr(c))||'Could not start payment. Please try again from My orders.')}
-  if(!window.Razorpay){PAYING=false;return toast('Payment window could not load. Check your internet and try again.')}
+  const c=await sb.functions.invoke('razorpay-create-order',{body:{items,total,name:f.name,phone:f.phone,addr:f.addr,city:f.city,pin:f.pin}});
+  if(c.error||!c.data||c.data.error){done();return toast((await fnErr(c))||'Could not start payment. Please try again.')}
   const d=c.data,col=(getComputedStyle(document.documentElement).getPropertyValue('--blue')||'').trim()||'#2f78a8';
-  const rz=new Razorpay({key:d.key_id,amount:d.amount,currency:d.currency,order_id:d.razorpay_order_id,name:$('#lg').textContent||'Trandixo',description:'Order '+id,
-   prefill:{name:prof.name||o.name||'',email:USER.email||'',contact:prof.phone||''},theme:{color:col},
+  const rz=new Razorpay({key:d.key_id,amount:d.amount,currency:d.currency,order_id:d.razorpay_order_id,name:$('#lg').textContent||'Trandixo',description:'Your order',
+   prefill:{name:f.name||'',email:USER.email||'',contact:f.phone||''},theme:{color:col},
    handler:async r=>{toast('Confirming payment…');
-    const v=await sb.functions.invoke('razorpay-verify',{body:{order_id:id,razorpay_payment_id:r.razorpay_payment_id,razorpay_order_id:r.razorpay_order_id,razorpay_signature:r.razorpay_signature}});
-    PAYING=false;toast(v.error||(v.data&&v.data.error)?'Payment received. Your order will be confirmed shortly.':'Payment successful!');
-    await loadOrders();route(1)},
-   modal:{ondismiss:()=>{PAYING=false;toast('Payment not completed. You can pay from My orders.')}}});
+    const v=await sb.functions.invoke('razorpay-verify',{body:{razorpay_payment_id:r.razorpay_payment_id,razorpay_order_id:r.razorpay_order_id,razorpay_signature:r.razorpay_signature}});
+    if(v.error||!v.data||v.data.error){done();toast('Payment received. Your order is being confirmed. Please check My orders in a minute and do not pay again.');setTimeout(()=>{location.hash='#/orders'},1500);return}
+    cart=[];save();await loadOrders();location.hash='#/orders/'+v.data.order_id},
+   modal:{ondismiss:()=>{done();toast('Payment not completed. Your order was not placed.')}}});
   rz.on('payment.failed',r=>{toast((r.error&&r.error.description)||'Payment failed. Please try again.')});
   rz.open();
- }catch(e){PAYING=false;toast('Payment error. Please try again.')}}
-document.addEventListener('click',e=>{const b=e.target.closest('[data-pay]');if(!b)return;e.preventDefault();payOrder(b.dataset.pay)});
+ }catch(e){done();toast('Payment error. Please try again.')}}
+document.addEventListener('change',e=>{if(!e.target||e.target.name!='pay')return;const b=$('#cbtn');if(b)b.textContent=e.target.value=='Online'?'Place order · '+b.dataset.t:'Submit order'});
 
 /* ----- support ----- */
 const TOPICS=['Order issue','Delivery','Return & refund','Product question','Payment','Other'];
