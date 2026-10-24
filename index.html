@@ -367,8 +367,8 @@ const $=s=>document.querySelector(s),app=$('#app');
 const inr=n=>'₹'+n.toLocaleString('en-IN');
 const ld=(k,d)=>{try{return JSON.parse(localStorage.getItem(k))||d}catch(e){return d}};
 const sv=(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}};
-let cart=ld('tx_cart',[]),orders=ld('tx_orders',[]),mem={cart:null,orders:null};
-let prof=ld('tx_profile',{});
+let cart=ld('tx_cart',[]),orders=[],mem={cart:null,orders:null};
+let prof={};try{localStorage.removeItem('tx_orders');localStorage.removeItem('tx_profile')}catch(e){}
 let wish=ld('tx_wish',[]);
 // ===== STORE INFO: edit these (or add the same keys in your Supabase settings table: address, hours, phone, email, instagram, facebook) =====
 const SHOP={address:'Add your store address here, City, State – PIN',hours:'Mon–Sat, 10:00 AM – 7:00 PM',phone:'+91 XXXXX XXXXX',email:'support@yourdomain.com',instagram:'https://instagram.com/',facebook:'https://facebook.com/',pinterest:'https://pinterest.com/',youtube:'https://youtube.com/'};
@@ -407,7 +407,7 @@ const SHARE='<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke=
 const catNames=()=>CATS.length?CATS.map(c=>c.name):['Handmade Bags','Clothing','Accessories'];
 const inCat=(p,c)=>CATS.length?String(p.cat).toLowerCase()==String(c).toLowerCase():grp(p)==c;
 const HEART='<svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" aria-hidden="true"><path d="M12 21s-8-5.2-8-11a4.6 4.6 0 0 1 8-3 4.6 4.6 0 0 1 8 3c0 5.8-8 11-8 11z"/></svg>';
-function save(){sv('tx_cart',cart);sv('tx_orders',orders)}
+function save(){sv('tx_cart',cart)}
 function tote(c,d){d=d||'rgba(255,255,255,.55)';
  return `<svg viewBox="0 0 200 220" aria-hidden="true"><path d="M70 62 C70 8 130 8 130 62" fill="none" stroke="${c}" stroke-width="9" stroke-linecap="round"/><path d="M70 62 C70 14 130 14 130 62" fill="none" stroke="rgba(0,0,0,.18)" stroke-width="2" stroke-dasharray="3 4"/><path d="M28 62 H172 L184 208 Q184 214 178 214 H22 Q16 214 16 208 Z" fill="${c}"/><path d="M28 62 H172 L174 84 H26 Z" fill="rgba(0,0,0,.12)"/><rect x="62" y="116" width="76" height="62" rx="8" fill="rgba(255,255,255,.18)" stroke="${d}" stroke-width="2" stroke-dasharray="5 5"/><circle cx="100" cy="147" r="9" fill="${d}"/><path d="M26 205 H174" stroke="${d}" stroke-width="2" stroke-dasharray="5 5"/></svg>`}
 const tint=h=>{const n=parseInt((h||'#2f78a8').replace('#',''),16)||0x2f78a8,m=v=>Math.round(v*.4+153);return `rgb(${m(n>>16)},${m(n>>8&255)},${m(n&255)})`};
@@ -485,9 +485,10 @@ function cartLine(i,idx,edit){const p=PRODUCTS.find(x=>x.id==i.id)||{name:i.name
 function summary(){const s=subtotal(),sh=ship(s);return `<div class="row"><span>Subtotal</span><span>${inr(s)}</span></div><div class="row"><span>Delivery</span><span>${sh?inr(sh):'Free'}</span></div><div class="row t"><span>Total</span><span>${inr(s+sh)}</span></div>`}
 function cartPage(){
  if(!cart.length)return `<div class="wrap empty"><h2>Your cart is empty</h2><p>Pick a tote and it will show up here.</p><a class="btn" href="#/shop">Browse totes</a></div>`;
- return `<div class="wrap"><div class="sh" style="margin-top:28px"><h2>Your cart</h2></div><div class="two"><div class="box">${cart.map((i,x)=>cartLine(i,x,1)).join('')}</div><div class="box"><h3>Order summary</h3>${summary()}<a class="btn block" style="margin-top:16px" href="#/checkout">Checkout</a></div></div></div>`}
+ return `<div class="wrap"><div class="sh" style="margin-top:28px"><h2>Your cart</h2></div><div class="two"><div class="box">${cart.map((i,x)=>cartLine(i,x,1)).join('')}</div><div class="box"><h3>Order summary</h3>${summary()}<a class="btn block" style="margin-top:16px" href="#/checkout">${USER?'Checkout':'Login &amp; checkout'}</a></div></div></div>`}
 function checkout(){
  if(!cart.length)return cartPage();
+ if(!USER)return loginGate('Login to place your order','Please continue with Google to checkout. Your delivery details and orders are saved to your account.');
  return `<div class="wrap"><div class="sh" style="margin-top:28px"><h2>Checkout</h2></div><div class="two"><form id="cf" class="box"><h3>Delivery details</h3>
  <div class="f2"><label>Full name<input name="name" required value="${esc(prof.name)}" autocomplete="name"></label><label>Phone<input name="phone" required pattern="[0-9]{10}" inputmode="numeric" value="${esc(prof.phone)}" placeholder="10-digit number" autocomplete="tel"></label></div>
  <label>Address<textarea name="addr" rows="2" required autocomplete="street-address">${esc(prof.addr)}</textarea></label>
@@ -498,17 +499,20 @@ function checkout(){
 const STEPS=['Placed','Packed','Shipped','Delivered'];
 function stage(o){if(o.status)return Math.max(0,STEPS.indexOf(o.status));const h=(Date.now()-o.t)/36e5;return h>72?3:h>36?2:h>6?1:0}
 function ordersPage(o2){
+ if(!USER)return loginGate('Login to see your orders','Continue with Google to view your orders and their delivery status on any device.');
  const done=o2?`<div class="box" style="margin:28px 0;text-align:center"><div class="ok-ic">✓</div><h2>Order placed</h2><p style="color:var(--mute);margin:6px 0 0">Thanks! Order ${o2} is confirmed. You can track it below.</p></div>`:'';
- const OL=myOrders();if(!OL.length)return `<div class="wrap empty"><h2>No orders yet</h2><p>Your orders and their delivery status will appear here.</p><a class="btn" href="#/shop">Shop totes</a>${USER?'':`<p style="margin-top:22px">Ordered before? <a href="#/profile" style="color:var(--blue);font-weight:700">Login with Google</a> to see your orders.</p>`}</div>`;
- return `<div class="wrap">${done}<div class="sh" style="margin-top:${o2?0:28}px"><h2>My orders</h2></div>${USER?'':`<div class="box" style="margin-bottom:16px;display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap"><span style="color:var(--mute)">Login to see your orders on every device.</span><button class="btn gbtn" style="margin:0;width:auto" data-glogin="1">${GOOGLE} Continue with Google</button></div>`}<div style="padding-bottom:48px">${OL.map(o=>{const s=stage(o);return `<div class="box ord"><div class="oh"><div><b>${o.id}</b><div style="color:var(--mute);font-size:14px">${new Date(o.t).toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'numeric'})} · ${o.pay}</div></div><span class="badge ${o.status=='Cancelled'?'off':s==3?'ok':''}">${o.status=='Cancelled'?'Cancelled':STEPS[s]}</span></div>${o.items.map(i=>cartLine(i,0,0)).join('')}${o.status!='Delivered'?'':[...new Set(o.items.map(i=>i.id))].filter(id=>PRODUCTS.some(x=>x.id==id)).map(id=>`<a class="btn ghost sm" style="margin:4px 8px 4px 0" href="#/review/${id}">★ Review ${esc(PRODUCTS.find(x=>x.id==id).name)}</a>`).join('')}${o.status=='Cancelled'?'':`<div class="trk">${STEPS.map((x,k)=>`<div class="${k<=s?'d':''}">${x}</div>`).join('')}</div>`}<div class="row t"><span>Total</span><span>${inr(o.total)}</span></div><div style="color:var(--mute);font-size:14px">Deliver to: ${o.name}, ${o.addr}, ${o.city} ${o.pin}</div><div style="margin-top:10px"><a class="btn ghost sm" href="#/support/new/${esc(o.id)}">Need help with this order?</a></div></div>`}).join('')}</div></div>`}
-function loginCard(){return `<div class="box" style="margin-top:8px;text-align:center;max-width:540px;margin-left:auto;margin-right:auto"><h3 style="font-size:22px">Login to ${esc($('#lg').textContent||'Trandixo')}</h3><p style="color:var(--mute);margin:8px 0 16px">Save your details for faster checkout, see your orders on any device and get quick help from our support team.</p><button class="btn gbtn" data-glogin="1">${GOOGLE} Continue with Google</button><p style="color:var(--mute);font-size:12px;margin:12px 0 0">We only use your name, email and photo. You can still shop as a guest.</p></div>`}
+ const OL=myOrders();if(!OL.length)return `<div class="wrap empty"><h2>No orders yet</h2><p>Your orders and their delivery status will appear here.</p><a class="btn" href="#/shop">Shop totes</a></div>`;
+ return `<div class="wrap">${done}<div class="sh" style="margin-top:${o2?0:28}px"><h2>My orders</h2></div><div style="padding-bottom:48px">${OL.map(o=>{const s=stage(o);return `<div class="box ord"><div class="oh"><div><b>${o.id}</b><div style="color:var(--mute);font-size:14px">${new Date(o.t).toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'numeric'})} · ${o.pay}</div></div><span class="badge ${o.status=='Cancelled'?'off':s==3?'ok':''}">${o.status=='Cancelled'?'Cancelled':STEPS[s]}</span></div>${o.items.map(i=>cartLine(i,0,0)).join('')}${o.status!='Delivered'?'':[...new Set(o.items.map(i=>i.id))].filter(id=>PRODUCTS.some(x=>x.id==id)).map(id=>`<a class="btn ghost sm" style="margin:4px 8px 4px 0" href="#/review/${id}">★ Review ${esc(PRODUCTS.find(x=>x.id==id).name)}</a>`).join('')}${o.status=='Cancelled'?'':`<div class="trk">${STEPS.map((x,k)=>`<div class="${k<=s?'d':''}">${x}</div>`).join('')}</div>`}<div class="row t"><span>Total</span><span>${inr(o.total)}</span></div><div style="color:var(--mute);font-size:14px">Deliver to: ${o.name}, ${o.addr}, ${o.city} ${o.pin}</div><div style="margin-top:10px"><a class="btn ghost sm" href="#/support/new/${esc(o.id)}">Need help with this order?</a></div></div>`}).join('')}</div></div>`}
+function loginGate(t,m){return `<div class="wrap"><div class="sh" style="margin-top:28px"><h2>Login</h2></div>${loginCard(t,m)}<div style="height:48px"></div></div>`}
+function loginCard(t,m){return `<div class="box" style="margin-top:8px;text-align:center;max-width:540px;margin-left:auto;margin-right:auto"><h3 style="font-size:22px">${t?esc(t):'Login to '+esc($('#lg').textContent||'Trandixo')}</h3><p style="color:var(--mute);margin:8px 0 16px">${m?esc(m):'Save your details for faster checkout, see your orders on any device and get quick help from our support team.'}</p><button class="btn gbtn" data-glogin="1">${GOOGLE} Continue with Google</button><p style="color:var(--mute);font-size:12px;margin:12px 0 0">We only use your name, email and photo.</p></div>`}
 function profilePage(){
- const OL=myOrders(),n=OL.length,spent=OL.filter(o=>o.status!='Cancelled').reduce((a,o)=>a+o.total,0),nm=prof.name||'Guest',lo=OL[0];
+ if(!USER)return `<div class="wrap"><div class="sh" style="margin-top:28px"><h2>My profile</h2></div>${loginCard()}</div>`;
+ const OL=myOrders(),n=OL.length,spent=OL.filter(o=>o.status!='Cancelled').reduce((a,o)=>a+o.total,0),nm=prof.name||USER.email,lo=OL[0];
  const av=USER&&prof.avatar?`<img src="${esc(prof.avatar)}" alt="" referrerpolicy="no-referrer">`:esc(nm.charAt(0).toUpperCase());
  const since=USER&&USER.created_at?new Date(USER.created_at).toLocaleDateString('en-IN',{month:'short',year:'numeric'}):'';
- return `<div class="wrap"><div class="sh" style="margin-top:28px"><h2>My profile</h2></div>${USER?'':loginCard()}<div class="two">
- <form id="pf" class="box"><div class="pf-head"><div class="av">${av}</div><div><b style="font-family:var(--fh),serif;font-size:20px">${esc(nm)}</b><div style="color:var(--mute);font-size:14px">${USER?esc(USER.email)+(since?' · Member since '+since:''):(prof.phone?esc(prof.phone):'Add your details below')}</div></div></div>
- <h3>${USER?'My details':'Saved details (this device)'}</h3>
+ return `<div class="wrap"><div class="sh" style="margin-top:28px"><h2>My profile</h2></div><div class="two">
+ <form id="pf" class="box"><div class="pf-head"><div class="av">${av}</div><div><b style="font-family:var(--fh),serif;font-size:20px">${esc(nm)}</b><div style="color:var(--mute);font-size:14px">${esc(USER.email)}${since?' · Member since '+since:''}</div></div></div>
+ <h3>My details</h3>
  <div class="f2"><label>Full name<input name="name" required value="${esc(prof.name)}" autocomplete="name"></label><label>Phone<input name="phone" required pattern="[0-9]{10}" inputmode="numeric" value="${esc(prof.phone)}" placeholder="10-digit number" autocomplete="tel"></label></div>
  <label>Address<textarea name="addr" rows="2" autocomplete="street-address">${esc(prof.addr)}</textarea></label>
  <div class="f2"><label>City<input name="city" value="${esc(prof.city)}"></label><label>PIN code<input name="pin" pattern="[0-9]{6}" inputmode="numeric" value="${esc(prof.pin)}"></label></div>
@@ -518,8 +522,8 @@ function profilePage(){
  ${lo?`<div style="color:var(--mute);font-size:14px;margin-bottom:12px">Last order: <b style="color:var(--ink)">${lo.id}</b> · ${lo.status=='Cancelled'?'Cancelled':STEPS[stage(lo)]}</div>`:''}
  <a class="btn ghost block" href="#/orders">View my orders</a>
  <a class="btn ghost block" style="margin-top:10px" href="#/support">Help &amp; support</a>
- ${USER?'<button class="btn ghost block" style="margin-top:10px" data-glogout="1">Log out</button>':''}
- <button class="btn ghost block" style="margin-top:10px;color:var(--coral)" data-clr="1">${USER?'Clear saved address':'Clear saved details'}</button></div>
+ <button class="btn ghost block" style="margin-top:10px" data-glogout="1">Log out</button>
+ <button class="btn ghost block" style="margin-top:10px;color:var(--coral)" data-clr="1">Clear saved address</button></div>
  </div></div>`}
 function wishPage(){const l=PRODUCTS.filter(p=>wish.includes(p.id));
  if(!l.length)return `<div class="wrap empty"><h2>Your wishlist is empty</h2><p>Tap the heart on any bag to save it here.</p><a class="btn" href="#/shop">Browse totes</a></div>`;
@@ -528,12 +532,12 @@ function searchPage(q){const ws=q.toLowerCase().split(/\s+/).filter(Boolean),l=P
  return `<div class="wrap" style="padding-top:28px"><div class="sh"><h2>Results for “${esc(q)}”</h2><span style="color:var(--mute)">${l.length} found</span></div>${l.length?`<div class="grid" style="padding-bottom:48px">${l.map(card).join('')}</div>`:`<div class="empty"><h2>No bags found</h2><p>Try a different word, like canvas, jute or denim.</p><a class="btn" href="#/shop">Browse all totes</a></div>`}</div>`}
 function reviewPage(id){const p=PRODUCTS.find(x=>x.id==id);if(!p)return notfound();
  return `<div class="wrap"><div class="doc box"><h2>Write a review</h2><div class="li"><div class="th" style="background:${p.bg}">${pic(p,0)}</div><div class="i"><b>${esc(p.name)}</b><small>${esc(p.cat)} · Handmade</small></div></div>${sb?`<form id="rf" style="margin-top:16px"><div class="pick" id="pk">${[1,2,3,4,5].map(n=>`<button type="button" data-star="${n}" aria-label="${n} stars">★</button>`).join('')}</div><label>Your name<input name="name" required value="${esc(prof.name)}"></label><label>Your review<textarea name="comment" rows="3"></textarea></label><button class="btn block">Submit review</button></form>`:'<p>Reviews are not available right now.</p>'}</div></div>`}
-function trackPage(){return `<div class="wrap"><div class="doc box"><h2>Track your order</h2><p>Enter the order ID you got after checkout, for example TDX-12345.</p><form id="tf"><label>Order ID<input name="oid" required placeholder="TDX-12345" value="${esc(orders[0]?orders[0].id:'')}"></label><button class="btn block">Track order</button></form><div id="tres" style="margin-top:16px"></div></div></div>`}
+function trackPage(){return `<div class="wrap"><div class="doc box"><h2>Track your order</h2><p>Enter the order ID you got after checkout, for example TDX-12345.</p><form id="tf"><label>Order ID<input name="oid" required placeholder="TDX-12345" value="${esc(myOrders()[0]?myOrders()[0].id:'')}"></label><button class="btn block">Track order</button></form><div id="tres" style="margin-top:16px"></div></div></div>`}
 const PAGES=Object.assign(Object.create(null),{
  about:['About us',()=>`<p>TRANDIXO makes handmade tote bags. Every bag is cut, stitched and finished by hand in small batches of 20 or fewer.</p><h3>What we use</h3><p>Cotton canvas, natural jute and recycled denim, with cotton lining and double-stitched straps that carry real weight.</p><h3>Why small batches</h3><p>A bag stitched by one person holds up better and carries a little character, so no two bags are exactly alike.</p><p style="margin-top:16px"><a class="btn" href="#/shop">Shop totes</a></p>`],
- shipping:['Shipping policy',()=>`<h3>Dispatch</h3><p>Orders are packed and shipped within 2–4 days.</p><h3>Delivery charges</h3><p>Delivery is free on orders of ${inr(ST.free)} and above. Below that, a flat delivery fee of ${inr(ST.fee)} applies.</p><h3>Payment options</h3><p>Cash on delivery, UPI and card.</p><h3>Tracking</h3><p>Use the <a href="#/track" style="color:var(--blue)">Track Your Order</a> page with your order ID to see whether your order is Placed, Packed, Shipped or Delivered. Orders placed on this device are also listed under My orders.</p><h3>Delivery details</h3><p>Please check your address, PIN code and phone number at checkout. Once a parcel has shipped we can't change the address.</p>`],
+ shipping:['Shipping policy',()=>`<h3>Dispatch</h3><p>Orders are packed and shipped within 2–4 days.</p><h3>Delivery charges</h3><p>Delivery is free on orders of ${inr(ST.free)} and above. Below that, a flat delivery fee of ${inr(ST.fee)} applies.</p><h3>Payment options</h3><p>Cash on delivery, UPI and card.</p><h3>Tracking</h3><p>Use the <a href="#/track" style="color:var(--blue)">Track Your Order</a> page with your order ID to see whether your order is Placed, Packed, Shipped or Delivered. Orders placed from your account are listed under My orders.</p><h3>Delivery details</h3><p>Please check your address, PIN code and phone number at checkout. Once a parcel has shipped we can't change the address.</p>`],
  returns:['Return & refund policy',()=>`<h3>7-day returns</h3><p>If your bag isn't right, you can send it back within 7 days of delivery.</p><h3>Conditions</h3><ul><li>The bag must be unused, unwashed and in its original condition.</li><li>Handmade bags can vary slightly in stitching, print and shade. This is part of the product and not a defect.</li></ul><h3>How to return</h3><p>Contact us from the <a href="#/contact" style="color:var(--blue)">Contact / Support</a> page with your order ID and a photo. We'll confirm the return and share the pickup or shipping details.</p><h3>Refunds</h3><p>Once we receive and check the bag, the refund goes to your original payment method. For cash on delivery orders we refund by UPI or bank transfer.</p><h3>Cancellations</h3><p>You can cancel an order before it ships by contacting us with your order ID.</p>`],
- privacy:['Privacy policy',()=>`<h3>What we collect</h3><p>Your name, phone number, delivery address, the items you order, and any review you write.</p><h3>How we use it</h3><p>To deliver your order, update you about it, handle returns and support, and show reviews on product pages.</p><h3>Where it is stored</h3><p>Orders and reviews are stored with our database provider. Your cart, wishlist and saved profile details stay in your own browser, and you can clear them any time from the Profile page.</p><h3>Payments</h3><p>We don't store card numbers on this site.</p><h3>Sharing</h3><p>We don't sell your data. We share your name, phone and address only with the courier that delivers your order.</p><h3>Questions or deletion requests</h3><p>Reach us through the <a href="#/contact" style="color:var(--blue)">Contact / Support</a> page.</p>`],
+ privacy:['Privacy policy',()=>`<h3>What we collect</h3><p>Your name, phone number, delivery address, the items you order, and any review you write.</p><h3>How we use it</h3><p>To deliver your order, update you about it, handle returns and support, and show reviews on product pages.</p><h3>Where it is stored</h3><p>Orders and reviews are stored with our database provider. Your cart and wishlist stay in your own browser. Your profile details and orders are linked to your Google account (we only receive your name, email and photo), and you can clear your saved address any time from the Profile page.</p><h3>Payments</h3><p>We don't store card numbers on this site.</p><h3>Sharing</h3><p>We don't sell your data. We share your name, phone and address only with the courier that delivers your order.</p><h3>Questions or deletion requests</h3><p>Reach us through the <a href="#/contact" style="color:var(--blue)">Contact / Support</a> page.</p>`],
  terms:['Terms & conditions',()=>`<h3>Using this site</h3><p>By placing an order you agree to these terms.</p><h3>Products and prices</h3><p>All prices are in Indian rupees (₹). Bags are handmade, so small differences in size, stitching, print and colour are normal. Colours may also look slightly different on your screen.</p><h3>Orders</h3><p>An order is confirmed when you receive an order ID. We may cancel an order if an item is out of stock or the details are incomplete. In that case we'll let you know and refund any payment made.</p><h3>Delivery, returns and refunds</h3><p>See our <a href="#/shipping" style="color:var(--blue)">Shipping Policy</a> and <a href="#/returns" style="color:var(--blue)">Return &amp; Refund Policy</a>.</p><h3>Reviews</h3><p>Reviews must be honest and respectful. We may remove reviews that are abusive or unrelated to the product.</p><h3>Changes</h3><p>We may update these terms from time to time. The version on this page is the one that applies.</p>`],
  contact:['Contact / Support',()=>{const wa=waLink();return `<p>Questions about an order, a return or a bag? We're happy to help. Please keep your order ID handy.</p><div class="box" style="margin:16px 0"><div class="row"><span>Phone</span><b>${esc(info('phone'))}</b></div><div class="row"><span>Email</span><b>${esc(info('email'))}</b></div><div class="row"><span>Address</span><b style="text-align:right">${esc(info('address'))}</b></div><div class="row"><span>Hours</span><b>${esc(info('hours'))}</b></div></div><div class="share"><a class="btn" href="mailto:${esc(info('email'))}">Email us</a>${wa?`<a class="btn ghost" href="${wa}" target="_blank" rel="noopener">WhatsApp</a>`:''}<a class="btn ghost" href="#/support">Support request</a></div>`}]
 });
@@ -586,11 +590,11 @@ document.addEventListener('click',e=>{
  else if(d.fclose){fopen=false;route(1)}
  else if(d.fapply){fprice=[...document.querySelectorAll('.dr input[name=pr]:checked')].map(x=>+x.value);fsort=(document.querySelector('.dr input[name=so]:checked')||{}).value||'';fstock=!!$('#fst').checked;fopen=false;route(1)}
  else if(d.fclear){fprice=[];fsort='';fstock=false;fopen=false;route(1)}
- else if(d.clr){if(confirm('Clear saved details?')){if(USER){saveProf({name:prof.name,phone:'',addr:'',city:'',pin:''}).then(()=>{toast('Details cleared');route(1)})}else{prof={};sv('tx_profile',prof);toast('Details cleared');route()}}}
+ else if(d.clr){if(USER&&confirm('Clear saved address?')){saveProf({name:prof.name,phone:'',addr:'',city:'',pin:''}).then(()=>{toast('Address cleared');route(1)})}}
 });
 let sb=null;
 document.addEventListener('submit',async e=>{
- if(e.target.id!='cf')return;e.preventDefault();const btn=e.target.querySelector('button');btn.disabled=true;
+ if(e.target.id!='cf')return;e.preventDefault();if(!USER){toast('Please login with Google to place your order');route();return}const btn=e.target.querySelector('button');btn.disabled=true;
  const f=Object.fromEntries(new FormData(e.target)),s=subtotal(),id='TDX-'+Math.floor(10000+Math.random()*90000);
  const bad=cart.find(i=>{const p=PRODUCTS.find(x=>x.id==i.id);return !p||isOut(p)||!okSel(p,i)});
  if(bad){const bp=PRODUCTS.find(x=>x.id==bad.id);btn.disabled=false;cart=cart.filter(i=>i!==bad);save();badge();toast((bp?bp.name:'Ek item')+' ab out of stock hai. Cart se hata diya gaya.');route();return}
@@ -604,14 +608,12 @@ document.addEventListener('submit',async e=>{
   let r=await sb.from('orders').insert(row);
   if(r.error&&linked&&/user_id|email/i.test(r.error.message)){linked=false;delete row.user_id;delete row.email;r=await sb.from('orders').insert(row)}
   if(r.error){btn.disabled=false;return toast('Order failed: '+r.error.message)}}
- if(USER){if(!prof.addr)await saveProf({name:prof.name||f.name,phone:f.phone,addr:f.addr,city:f.city,pin:f.pin},1)}
- else if(!prof.name){prof={name:f.name,phone:f.phone,addr:f.addr,city:f.city,pin:f.pin};sv('tx_profile',prof)}
- linked?CO.unshift(o):orders.unshift(o);cart=[];save();location.hash='#/orders/'+id;
+ if(!prof.addr)await saveProf({name:prof.name||f.name,phone:f.phone,addr:f.addr,city:f.city,pin:f.pin},1);
+ CO.unshift(o);cart=[];save();location.hash='#/orders/'+id;
 });
 document.addEventListener('submit',async e=>{
  if(e.target.id!='pf')return;e.preventDefault();const p=Object.fromEntries(new FormData(e.target));
- if(USER){if(await saveProf(p)){toast('Profile saved');route(1)}return}
- prof=p;sv('tx_profile',prof);toast('Profile saved');route();
+ if(!USER)return;if(await saveProf(p)){toast('Profile saved');route(1)}
 });
 document.addEventListener('submit',async e=>{
  if(e.target.id!='rf')return;e.preventDefault();if(!rate)return toast('Tap the stars to rate');
@@ -659,9 +661,8 @@ const OAUTH_RET=/[?&](code|error)=/.test(location.search);
 let USER=null,CO=[],TK=[],TKM={},TKL=false,SUPERR=false,booted=false;
 const GOOGLE='<svg width="20" height="20" viewBox="0 0 48 48" aria-hidden="true"><path fill="#EA4335" d="M24 9.5c3.5 0 6.6 1.2 9.1 3.6l6.8-6.8C35.9 2.4 30.4 0 24 0 14.6 0 6.5 5.4 2.6 13.2l7.9 6.1C12.4 13.5 17.7 9.5 24 9.5z"/><path fill="#4285F4" d="M46.5 24.5c0-1.6-.1-3.1-.4-4.5H24v9h12.7c-.6 3-2.3 5.5-4.8 7.2l7.6 5.9c4.4-4.1 7-10.1 7-17.6z"/><path fill="#FBBC05" d="M10.5 28.7c-.5-1.5-.8-3-.8-4.7s.3-3.2.8-4.7l-7.9-6.1C.9 16.4 0 20.1 0 24s.9 7.6 2.6 10.8l7.9-6.1z"/><path fill="#34A853" d="M24 48c6.5 0 11.9-2.1 15.9-5.8l-7.6-5.9c-2.1 1.4-4.9 2.3-8.3 2.3-6.3 0-11.6-4-13.5-9.8l-7.9 6.1C6.5 42.6 14.6 48 24 48z"/></svg>';
 const fdt=t=>new Date(t).toLocaleString('en-IN',{day:'numeric',month:'short',hour:'numeric',minute:'2-digit'});
-const GUEST=()=>ld('tx_profile',{});
 const mapOrder=r=>({id:r.id,t:new Date(r.created_at).getTime(),items:jl(r.items),total:+r.total,pay:r.payment,name:r.customer_name,addr:r.address,city:r.city,pin:r.pin,status:r.status||'Placed'});
-function myOrders(){if(!USER)return orders;const m=new Map(CO.map(o=>[o.id,o]));orders.forEach(o=>{if(!m.has(o.id))m.set(o.id,o)});return[...m.values()].sort((a,b)=>b.t-a.t)}
+function myOrders(){return USER?CO:[]}
 async function gLogin(){if(!sb)return toast('Login is not available right now');
  try{sessionStorage.setItem('tx_after',location.hash||'#/profile')}catch(e){}
  const {error}=await sb.auth.signInWithOAuth({provider:'google',options:{redirectTo:location.origin+location.pathname,queryParams:{prompt:'select_account'}}});if(error)toast(error.message)}
@@ -671,7 +672,7 @@ function hdr(){const a=document.querySelector('a.ib[data-r=profile]');if(!a)retu
  a.innerHTML=USER&&prof.avatar?`<img src="${esc(prof.avatar)}" alt="" referrerpolicy="no-referrer" style="width:30px;height:30px;border-radius:50%;object-fit:cover">`:a.dataset.o;a.setAttribute('aria-label',USER?'My account':'Login / Profile')}
 async function loadProfile(){const u=USER,m=u.user_metadata||{};let r=null;
  try{const q=await sb.from('profiles').select('*').eq('id',u.id).maybeSingle();r=q.data;
-  if(!q.error&&!r){const g=GUEST(),row={id:u.id,email:u.email,name:m.full_name||m.name||g.name||'',avatar:m.avatar_url||m.picture||'',phone:g.phone||'',address:g.addr||'',city:g.city||'',pin:g.pin||''};
+  if(!q.error&&!r){const row={id:u.id,email:u.email,name:m.full_name||m.name||'',avatar:m.avatar_url||m.picture||'',phone:'',address:'',city:'',pin:''};
    const w=await sb.from('profiles').upsert(row,{onConflict:'id',ignoreDuplicates:true});if(!w.error)r=row}}catch(e){}
  r=r||{};prof={name:r.name||m.full_name||m.name||'',phone:r.phone||'',addr:r.address||'',city:r.city||'',pin:r.pin||'',email:u.email,avatar:r.avatar||m.avatar_url||m.picture||''}}
 async function saveProf(p,quiet){const {error}=await sb.from('profiles').upsert({id:USER.id,email:USER.email,name:p.name,phone:p.phone,address:p.addr,city:p.city,pin:p.pin,avatar:prof.avatar||'',updated_at:new Date().toISOString()});
@@ -684,7 +685,7 @@ function accSync(r,h){const go=ch=>{if(ch&&location.hash.replace(/^#\/?/,'').spl
  if(r=='support'){loadTickets().then(go);if(h[1]&&h[1]!='new')loadThread(+h[1]).then(go)}}
 async function setUser(u){const was=USER&&USER.id,now=u&&u.id;if(was==now){USER=u||null;return}
  USER=u||null;CO=[];TK=[];TKM={};TKL=false;
- if(USER){await loadProfile();await loadOrders()}else prof=GUEST();
+ if(USER){await loadProfile();await loadOrders()}else prof={};
  hdr();if(booted)route(1)}
 async function authInit(){if(!sb)return;
  try{const q=new URLSearchParams(location.search);if(q.get('error_description'))setTimeout(()=>toast(q.get('error_description')),600);
