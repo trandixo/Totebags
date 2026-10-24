@@ -108,7 +108,7 @@ input[type=checkbox]{width:auto;margin-right:6px}input[type=color]{padding:2px;h
 const $=s=>document.querySelector(s),R=$('#root');
 const inr=n=>'₹'+Number(n||0).toLocaleString('en-IN');
 const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
-const STAT=['Placed','Packed','Shipped','Delivered','Cancelled'];
+const STAT=['Placed','Packed','Shipped','Delivered','Cancelled'];const unpaid=o=>/^Online/.test(o.payment||'')&&o.payment_status!=='Paid';
 let sb,S={pv:{},tk:[],tf:'Open',p:[],o:[],s:{},r:[],c:[],t:[],b:[],pi:{},of:{},pd:{},v:'dash'};
 const jo=v=>{try{const x=typeof v=='string'?JSON.parse(v):v;return x&&typeof x=='object'&&!Array.isArray(x)?x:{}}catch(e){return{}}};
 let PIMG=[];
@@ -157,12 +157,12 @@ async function pwSave(){
  }catch(x){e(x.message)}
  b.disabled=false;b.textContent='Update password'}
 function dash(){
- const ok=S.o.filter(o=>o.status!='Cancelled'),rev=ok.reduce((a,o)=>a+Number(o.total),0),aov=ok.length?rev/ok.length:0;
+ const ok=S.o.filter(o=>o.status!='Cancelled'&&!unpaid(o)),rev=ok.reduce((a,o)=>a+Number(o.total),0),aov=ok.length?rev/ok.length:0;
  const days=[...Array(14)].map((_,i)=>{const d=new Date();d.setDate(d.getDate()-13+i);return d.toDateString()});
  const byDay=days.map(d=>ok.filter(o=>new Date(o.created_at).toDateString()==d).reduce((a,o)=>a+Number(o.total),0)),mx=Math.max(...byDay,1);
  const tp={};ok.forEach(o=>(o.items||[]).forEach(i=>{const n=i.name||('Product #'+i.id);tp[n]=(tp[n]||0)+(i.q||1)}));
  const top=Object.entries(tp).sort((a,b)=>b[1]-a[1]).slice(0,5);
- const cnt=s=>S.o.filter(o=>o.status==s).length;
+ const cnt=s=>S.o.filter(o=>o.status==s&&!unpaid(o)).length;
  return `<div class="top"><h1>Dashboard</h1><button class="btn g" onclick="start()">Refresh</button></div>
  <div class="cards"><div class="box kpi"><small>Revenue</small><b>${inr(rev)}</b></div><div class="box kpi"><small>Orders</small><b>${S.o.length}</b></div><div class="box kpi"><small>Avg order value</small><b>${inr(aov)}</b></div><div class="box kpi"><small>Pending (Placed)</small><b>${cnt('Placed')}</b></div></div>
  <div class="two"><div class="box"><h3>Revenue, last 14 days</h3><div class="chart">${byDay.map((v,i)=>`<div title="${inr(v)}"><i style="height:${v/mx*100}%"></i>${new Date(days[i]).getDate()}</div>`).join('')}</div></div>
@@ -274,7 +274,7 @@ async function bsave(i){const title=$('#b_t').value.trim();if(!title)return toas
  const r=await sb.from('settings').upsert({key:'banners',value:JSON.stringify(list)});if(r.error)return toast(r.error.message);
  $('#md').remove();toast('Saved');start()}
 async function bdel(i){if(!confirm('Delete this banner?'))return;const list=S.b.filter((b,j)=>j!=i);const r=await sb.from('settings').upsert({key:'banners',value:JSON.stringify(list)});r.error?toast(r.error.message):(toast('Deleted'),start())}
-function ord(){return `<div class="top"><h1>Orders (${S.o.length})</h1></div>${S.o.map(o=>`<div class="box"><div style="display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap"><div><b>${esc(o.id)}</b> <span class="pill ${o.status=='Delivered'?'ok':o.status=='Cancelled'?'off':''}">${esc(o.status)}</span><br><small style="color:var(--mute)">${new Date(o.created_at).toLocaleString('en-IN')} · ${esc(o.payment)}</small></div><div style="text-align:right"><b>${inr(o.total)}</b><br><select style="width:auto" onchange="ost('${esc(o.id)}',this.value)">${STAT.map(s=>`<option ${s==o.status?'selected':''}>${s}</option>`).join('')}</select><br><button class="btn s" style="margin-top:8px;background:#fde8ea;color:#d63c4f" onclick="odel('${esc(o.id)}')">Delete order</button></div></div><p style="margin:10px 0 4px">${esc(o.customer_name)} · ${esc(o.phone)}${o.email?' · '+esc(o.email):''}<br><small style="color:var(--mute)">${esc(o.address)}, ${esc(o.city)} ${esc(o.pin)}</small></p>${(o.items||[]).map(i=>`<div style="font-size:14px;color:var(--mute)">${i.q||1} × ${esc(i.name||'Product #'+i.id)}${(i.sn||i.s||i.cn||i.ch)?' ('+esc([i.sn||i.s,i.cn||i.ch].filter(Boolean).join(', '))+')':''}</div>`).join('')}</div>`).join('')||'<div class="box" style="color:var(--mute)">No orders yet.</div>'}`}
+function ord(){return `<div class="top"><h1>Orders (${S.o.length})</h1></div>${S.o.map(o=>`<div class="box"><div style="display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap"><div><b>${esc(o.id)}</b> <span class="pill ${o.status=='Delivered'?'ok':o.status=='Cancelled'?'off':''}">${esc(o.status)}</span> ${o.payment_status=='Paid'?'<span class="pill ok">Paid</span>':unpaid(o)?'<span class="pill off">Unpaid – do not ship</span>':o.payment_status=='COD'?'<span class="pill">COD</span>':''}<br><small style="color:var(--mute)">${new Date(o.created_at).toLocaleString('en-IN')} · ${esc(o.payment)}${o.razorpay_payment_id?' · '+esc(o.razorpay_payment_id):''}</small></div><div style="text-align:right"><b>${inr(o.total)}</b><br><select style="width:auto" onchange="ost('${esc(o.id)}',this.value)">${STAT.map(s=>`<option ${s==o.status?'selected':''}>${s}</option>`).join('')}</select><br><button class="btn s" style="margin-top:8px;background:#fde8ea;color:#d63c4f" onclick="odel('${esc(o.id)}')">Delete order</button></div></div><p style="margin:10px 0 4px">${esc(o.customer_name)} · ${esc(o.phone)}${o.email?' · '+esc(o.email):''}<br><small style="color:var(--mute)">${esc(o.address)}, ${esc(o.city)} ${esc(o.pin)}</small></p>${(o.items||[]).map(i=>`<div style="font-size:14px;color:var(--mute)">${i.q||1} × ${esc(i.name||'Product #'+i.id)}${(i.sn||i.s||i.cn||i.ch)?' ('+esc([i.sn||i.s,i.cn||i.ch].filter(Boolean).join(', '))+')':''}</div>`).join('')}</div>`).join('')||'<div class="box" style="color:var(--mute)">No orders yet.</div>'}`}
 async function odel(id){if(!confirm('Order '+id+' permanently delete karna hai?\n\nIs order ki saari history, is order se jude support tickets/messages aur dashboard ke sales/payout numbers se bhi hat jayegi. Ye undo nahi hoga.'))return;
  const t=await sb.from('support_tickets').delete().eq('order_id',id);if(t.error&&!/support_tickets|relation|schema cache/i.test(t.error.message))return toast(t.error.message);
  const {data,error}=await sb.from('orders').delete().eq('id',id).select();
