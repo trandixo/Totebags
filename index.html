@@ -350,6 +350,8 @@ details.fq p{margin:8px 0 0;color:var(--mute);font-size:14px}
  <a href="#/profile" data-r="profile"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-7 8-7s8 3 8 7"/></svg>Profile</a>
 </nav>
 <script>
+(function(){try{var q=new URLSearchParams(location.search).get('r'),t=null;if(q&&/^\/(?!\/)/.test(q))t=q+location.hash;else if(/^#\//.test(location.hash))t=location.hash.slice(1);if(t)history.replaceState(null,'',t)}catch(e){}})();
+function H(){return '#'+(location.pathname.replace(/\/index\.html$/,'/')||'/')}
 // ===== SUPABASE: paste your Project URL and anon public key between the quotes =====
 const SB_URL='https://ukwhqktdelanuqlbfckg.supabase.co',SB_KEY='sb_publishable_qTce_OToCZfoors1p1-xzA_4siEte5W';
 let ST={free:999,fee:60};
@@ -417,7 +419,7 @@ const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&g
 let REV=[],rate=0;
 const stars=n=>{n=Math.round(n);return '★★★★★'.slice(0,n)+'☆☆☆☆☆'.slice(0,5-n)};
 const rt=(id,big)=>{const r=REV.filter(x=>x.product_id==id);if(!r.length)return big?'<div class="rt big"><small>No reviews yet</small></div>':'';const a=r.reduce((t,x)=>t+x.rating,0)/r.length;return `<div class="rt ${big?'big':''}"><span>${stars(a)}</span> ${a.toFixed(1)} <small>(${r.length})</small></div>`};
-const shareUrl=()=>location.href.split('#')[0]+'#/p/'+location.hash.split('/')[2];
+const shareUrl=()=>location.origin+'/p/'+pid();
 function revBox(p){const r=REV.filter(x=>x.product_id==p.id);
  return `<div class="box" style="margin-bottom:48px"><h3 style="margin-bottom:6px">Ratings and reviews</h3>${r.map(x=>`<div class="rv"><b>${esc(x.name)}</b> <span class="rt"><span>${stars(x.rating)}</span></span><div>${esc(x.comment)}</div><small>${new Date(x.created_at).toLocaleDateString('en-IN')}</small></div>`).join('')||'<p style="color:var(--mute);margin:0">Be the first to review this bag.</p>'}${sb&&canRev(p)?`<form id="rf" style="margin-top:18px"><h3 style="margin-bottom:8px">Write a review</h3><div class="pick" id="pk">${[1,2,3,4,5].map(n=>`<button type="button" data-star="${n}" aria-label="${n} stars">★</button>`).join('')}</div><label>Your name<input name="name" required value="${esc(prof.name)}"></label><label>Review<textarea name="comment" rows="2"></textarea></label><button class="btn">Submit review</button></form>`:(sb?'<p style="color:var(--mute);font-size:14px;margin:16px 0 0">Only customers who bought this bag can write a review.</p>':'')}</div>`}
 function toast(m){const t=document.createElement('div');t.className='toast';t.textContent=m;document.body.appendChild(t);setTimeout(()=>t.remove(),1800)}
@@ -557,14 +559,19 @@ function footerHTML(nm){
 function notfound(){return `<div class="wrap empty"><h2>Page not found</h2><a class="btn" href="#/">Go home</a></div>`}
 
 function route(keep){
- const h=location.hash.replace(/^#\/?/,'').split('/'),r=h[0]||'home';let out;if(r=='shop')cat=dq(h[1])||'All';
+ const h=H().replace(/^#\/?/,'').split('/'),r=h[0]||'home';let out;if(r=='shop')cat=dq(h[1])||'All';
  if(r=='home')out=home();else if(r=='shop')out=shop();else if(r=='p')out=product(h[1]);else if(r=='cart')out=cartPage();else if(r=='checkout')out=checkout();else if(r=='orders')out=ordersPage(h[1]);else if(r=='profile')out=profilePage();else if(r=='wishlist')out=wishPage();else if(r=='search')out=searchPage(dq(h[1]));else if(r=='track')out=trackPage();else if(r=='review')out=reviewPage(h[1]);else if(r=='support')out=supportPage(h[1],h[2]);else if(PAGES[r])out=pageView(r);else out=notfound();
  app.innerHTML=out;document.body.style.overflow=fopen?'hidden':'';if(!keep)window.scrollTo(0,0);badge();if(!keep&&USER)accSync(r,h);
  const si=$('#sq');if(si){if(r=='search'){const q=dq(h[1]);if(si.value.trim()!=q)si.value=q}else if(si.value)si.value=''}
  document.querySelectorAll('[data-r]').forEach(a=>a.classList.toggle('on',a.dataset.r==(r=='p'?'shop':r=='checkout'?'cart':r)));
 }
-window.addEventListener('hashchange',()=>{sel={c:0,s:'M',q:1};rate=0;fopen=false;route()});
-function pid(){return +location.hash.split('/')[2]}
+function go(h){const p=String(h).replace(/^#/,'')||'/';if(p!==location.pathname+location.search){try{history.pushState(null,'',p)}catch(e){location.href=p;return}}sel={c:0,s:'M',q:1};rate=0;fopen=false;route()}
+window.addEventListener('popstate',()=>{sel={c:0,s:'M',q:1};rate=0;fopen=false;route()});
+window.addEventListener('hashchange',()=>{if(/^#\//.test(location.hash)){history.replaceState(null,'',location.hash.slice(1));sel={c:0,s:'M',q:1};rate=0;fopen=false;route()}});
+function fixLinks(){document.querySelectorAll('a[href^="#/"]').forEach(a=>a.setAttribute('href',a.getAttribute('href').slice(1)))}
+let FLT=0;new MutationObserver(()=>{if(FLT)return;FLT=requestAnimationFrame(()=>{FLT=0;fixLinks()})}).observe(document.documentElement,{childList:true,subtree:true});
+document.addEventListener('click',e=>{if(e.defaultPrevented||e.button||e.metaKey||e.ctrlKey||e.shiftKey||e.altKey)return;const a=e.target.closest&&e.target.closest('a[href]');if(!a||a.target||a.hasAttribute('download'))return;const u=a.getAttribute('href')||'';if(!/^(#\/|\/(?!\/))/.test(u))return;if(/\.(html?|xml|txt|png|jpe?g|svg|webp|gif|pdf|ico|json)($|[?#])/i.test(u))return;e.preventDefault();go(u[0]=='#'?u:'#'+u)});
+function pid(){return +H().split('/')[2]}
 function addCurrent(){const id=pid(),p=PRODUCTS.find(x=>x.id==id);if(!p||isOut(p)||!okSel(p,sel)){toast('Ye option abhi out of stock hai');return false}const k=cart.find(i=>i.id==id&&i.c==sel.c&&i.s==sel.s);k?k.q+=sel.q:cart.push({id,c:sel.c,s:sel.s,q:sel.q});save();badge();return true}
 document.addEventListener('click',e=>{
  const t=e.target.closest('button');if(!t)return;const d=t.dataset;
@@ -579,7 +586,7 @@ document.addEventListener('click',e=>{
   else{(navigator.clipboard?navigator.clipboard.writeText(u):Promise.reject()).then(()=>toast('Link copied')).catch(()=>prompt('Copy this link',u))}}
  else if(d.wa){const p=PRODUCTS.find(x=>x.id==pid());window.open('https://wa.me/?text='+encodeURIComponent(p.name+' – '+inr(p.price)+'\n'+shareUrl()),'_blank')}
  else if(d.add){if(addCurrent())toast('Added to cart')}
- else if(d.buy){if(addCurrent())location.hash='#/checkout'}
+ else if(d.buy){if(addCurrent())go('#/checkout')}
  else if(d.rm!==undefined){const cf=$('#cf');if(cf){const fd=Object.fromEntries(new FormData(cf));CKF={name:fd.name||'',phone:fd.phone||'',addr:fd.addr||'',city:fd.city||'',pin:fd.pin||'',pay:fd.pay||'Online'}}cart.splice(+d.rm,1);save();cf?route(1):route()}
  else if(d.qadd){const id=+d.qadd,p=PRODUCTS.find(x=>x.id==id);if(!p||isOut(p))return toast('Out of stock');const f=firstSel(p),k=cart.find(i=>i.id==id&&i.c==f.c&&i.s==f.s);k?k.q++:cart.push({id,c:f.c,s:f.s,q:1});save();badge();toast('Added to cart')}
  else if(d.srch){const r=$('#srow');r.hidden=!r.hidden;if(!r.hidden)$('#sq').focus()}
@@ -587,7 +594,7 @@ document.addEventListener('click',e=>{
  else if(d.up){window.scrollTo({top:0,behavior:'smooth'})}
  else if(d.wish){const id=+d.wish,i=wish.indexOf(id),on=i<0;on?wish.push(id):wish.splice(i,1);sv('tx_wish',wish);
   document.querySelectorAll('[data-wish="'+id+'"]').forEach(b=>{b.classList.toggle('on',on);const wt=b.querySelector('.wt');if(wt)wt.textContent=on?'Saved':'Save'});
-  badge();toast(on?'Added to wishlist':'Removed from wishlist');if(location.hash.indexOf('#/wishlist')==0)route(1)}
+  badge();toast(on?'Added to wishlist':'Removed from wishlist');if(H().indexOf('#/wishlist')==0)route(1)}
  else if(d.fopen){fopen=true;route(1)}
  else if(d.fclose){fopen=false;route(1)}
  else if(d.fapply){fprice=[...document.querySelectorAll('.dr input[name=pr]:checked')].map(x=>+x.value);fsort=(document.querySelector('.dr input[name=so]:checked')||{}).value||'';fstock=!!$('#fst').checked;fopen=false;route(1)}
@@ -612,7 +619,7 @@ document.addEventListener('submit',async e=>{
   if(r.error&&linked&&/user_id|email/i.test(r.error.message)){linked=false;delete row.user_id;delete row.email;r=await sb.from('orders').insert(row)}
   if(r.error){btn.disabled=false;return toast('Order failed: '+r.error.message)}}
  if(!prof.addr)await saveProf({name:prof.name||f.name,phone:f.phone,addr:f.addr,city:f.city,pin:f.pin},1);
- CO.unshift(o);cart=[];save();location.hash='#/orders/'+id;
+ CO.unshift(o);cart=[];save();go('#/orders/'+id);
 });
 document.addEventListener('submit',async e=>{
  if(e.target.id!='pf')return;e.preventDefault();const p=Object.fromEntries(new FormData(e.target));
@@ -622,15 +629,15 @@ document.addEventListener('submit',async e=>{
  if(e.target.id!='rf')return;e.preventDefault();if(!rate)return toast('Tap the stars to rate');
  const f=Object.fromEntries(new FormData(e.target));
  const {data,error}=await sb.from('reviews').insert({product_id:pid(),name:f.name.trim(),rating:rate,comment:f.comment.trim()}).select().single();
- if(error)return toast(error.message);const pp=pid();REV.unshift(data);rate=0;toast('Thanks for your review!');if(location.hash.indexOf('#/review/')==0)location.hash='#/p/'+pp;else route();
+ if(error)return toast(error.message);const pp=pid();REV.unshift(data);rate=0;toast('Thanks for your review!');if(H().indexOf('#/review/')==0)go('#/p/'+pp);else route();
 });
 let sT;
 document.addEventListener('input',e=>{
  if(e.target.id!='sq')return;clearTimeout(sT);const v=e.target.value.trim();
- sT=setTimeout(()=>{if(v)location.hash='#/search/'+encodeURIComponent(v);else if(location.hash.indexOf('#/search')==0)location.hash='#/shop'},350)});
+ sT=setTimeout(()=>{if(v)go('#/search/'+encodeURIComponent(v));else if(H().indexOf('#/search')==0)go('#/shop')},350)});
 document.addEventListener('submit',e=>{
  if(e.target.id!='sf')return;e.preventDefault();clearTimeout(sT);const v=$('#sq').value.trim();
- if(v)location.hash='#/search/'+encodeURIComponent(v);$('#sq').blur()});
+ if(v)go('#/search/'+encodeURIComponent(v));$('#sq').blur()});
 document.addEventListener('submit',async e=>{
  if(e.target.id!='tf')return;e.preventDefault();
  const id=String(new FormData(e.target).get('oid')||'').trim().toUpperCase(),out=$('#tres'),lo=myOrders().find(o=>o.id==id);
@@ -667,9 +674,9 @@ const fdt=t=>new Date(t).toLocaleString('en-IN',{day:'numeric',month:'short',hou
 const mapOrder=r=>({id:r.id,t:new Date(r.created_at).getTime(),items:jl(r.items),total:+r.total,pay:r.payment,name:r.customer_name,addr:r.address,city:r.city,pin:r.pin,status:r.status||'Placed',pstatus:r.payment_status||''});
 function myOrders(){return USER?CO:[]}
 async function gLogin(){if(!sb)return toast('Login is not available right now');
- try{sessionStorage.setItem('tx_after',location.hash||'#/profile')}catch(e){}
- const {error}=await sb.auth.signInWithOAuth({provider:'google',options:{redirectTo:location.origin+location.pathname,queryParams:{prompt:'select_account'}}});if(error)toast(error.message)}
-async function gLogout(){if(!sb)return;await sb.auth.signOut();toast('Logged out');if(location.hash!='#/')location.hash='#/'}
+ try{sessionStorage.setItem('tx_after',H()||'#/profile')}catch(e){}
+ const {error}=await sb.auth.signInWithOAuth({provider:'google',options:{redirectTo:location.origin+'/',queryParams:{prompt:'select_account'}}});if(error)toast(error.message)}
+async function gLogout(){if(!sb)return;await sb.auth.signOut();toast('Logged out');if(H()!='#/')go('#/')}
 document.addEventListener('click',e=>{const g=e.target.closest('[data-glogin],[data-glogout]');if(!g)return;e.preventDefault();g.dataset.glogin!==undefined?gLogin():gLogout()});
 function hdr(){const a=document.querySelector('a.ib[data-r=profile]');if(!a)return;if(!a.dataset.o)a.dataset.o=a.innerHTML;
  a.innerHTML=USER&&prof.avatar?`<img src="${esc(prof.avatar)}" alt="" referrerpolicy="no-referrer" style="width:30px;height:30px;border-radius:50%;object-fit:cover">`:a.dataset.o;a.setAttribute('aria-label',USER?'My account':'Login / Profile')}
@@ -683,21 +690,21 @@ async function saveProf(p,quiet){const {error}=await sb.from('profiles').upsert(
 async function loadOrders(){if(!USER)return false;try{const q=await sb.from('orders').select('*').eq('user_id',USER.id).order('created_at',{ascending:false});if(q.error)return false;const n=q.data.map(mapOrder),ch=JSON.stringify(n)!=JSON.stringify(CO);CO=n;return ch}catch(e){return false}}
 async function loadTickets(){if(!USER)return false;try{const q=await sb.from('support_tickets').select('*').eq('user_id',USER.id).order('updated_at',{ascending:false});TKL=true;if(q.error){SUPERR=true;return true}SUPERR=false;const ch=JSON.stringify(q.data)!=JSON.stringify(TK);TK=q.data;return ch}catch(e){TKL=true;SUPERR=true;return true}}
 async function loadThread(id){try{const q=await sb.from('support_messages').select('*').eq('ticket_id',id).order('created_at');if(q.error)return false;const ch=JSON.stringify(q.data)!=JSON.stringify(TKM[id]);TKM[id]=q.data;return ch}catch(e){return false}}
-function accSync(r,h){const go=ch=>{if(ch&&location.hash.replace(/^#\/?/,'').split('/')[0]==r)route(1)};
+function accSync(r,h){const go=ch=>{if(ch&&H().replace(/^#\/?/,'').split('/')[0]==r)route(1)};
  if(r=='orders'||r=='profile')loadOrders().then(go);
  if(r=='support'){loadTickets().then(go);if(h[1]&&h[1]!='new')loadThread(+h[1]).then(go)}}
 async function setUser(u){const was=USER&&USER.id,now=u&&u.id;if(was==now){USER=u||null;return}
  USER=u||null;CO=[];TK=[];TKM={};TKL=false;
  if(USER){await loadProfile();await loadOrders()}else prof={};
  hdr();if(booted)route(1)}
-async function authInit(){if(/^#error=/.test(location.hash)){try{const p=new URLSearchParams(location.hash.slice(1));setTimeout(()=>toast(p.get('error_description')||'Login failed. Please try again.'),600);history.replaceState(null,'',location.pathname+'#/')}catch(e){location.hash='#/'}}
+async function authInit(){if(/^#error=/.test(location.hash)){try{const p=new URLSearchParams(location.hash.slice(1));setTimeout(()=>toast(p.get('error_description')||'Login failed. Please try again.'),600);history.replaceState(null,'',location.pathname)}catch(e){history.replaceState(null,'','/')}}
  if(!sb)return;
  try{const q=new URLSearchParams(location.search);if(q.get('error_description'))setTimeout(()=>toast(q.get('error_description')),600);
   const {data}=await sb.auth.getSession();await setUser(data.session&&data.session.user)}catch(e){}
  try{sb.auth.onAuthStateChange((ev,se)=>{setTimeout(()=>setUser(se&&se.user),0)})}catch(e){}
  if(OAUTH_RET){try{history.replaceState(null,'',location.pathname+location.hash)}catch(e){}}}
 function afterLogin(){if(!OAUTH_RET)return;let a=null;try{a=sessionStorage.getItem('tx_after');sessionStorage.removeItem('tx_after')}catch(e){}
- if(USER){toast('Welcome'+(prof.name?', '+prof.name.split(' ')[0]:'')+'!');if(a&&a!=location.hash&&/^#\//.test(a))location.hash=a}}
+ if(USER){toast('Welcome'+(prof.name?', '+prof.name.split(' ')[0]:'')+'!');if(a&&a!=H()&&/^#\//.test(a))go(a)}}
 
 /* ----- online payments (Razorpay): order is created only AFTER payment succeeds ----- */
 const isOnl=o=>/^Online/.test(o.pay||'');
@@ -709,7 +716,7 @@ function pmClose(){const m=document.getElementById('pmodal');if(m)m.remove();doc
 function pmOpen(id,html){pmClose();const m=document.createElement('div');m.id='pmodal';m.dataset.id=id||'';m.innerHTML='<div class="pm-card">'+html+'</div>';document.body.appendChild(m);document.body.style.overflow='hidden'}
 function showSuccess(id,total){pmOpen(id,`<div class="pm-ic ok"><svg viewBox="0 0 52 52" width="72" height="72" aria-hidden="true"><circle cx="26" cy="26" r="24" fill="none" stroke="currentColor" stroke-width="3"/><path d="M15 27l8 8 14-16" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/></svg></div><h2>Order placed successfully!</h2><p>We received your payment of <b>${inr(total)}</b>. Your order <b>${esc(id)}</b> is confirmed and will be packed soon.</p><div class="pm-btns"><button class="btn" data-pm="o">View my order</button><button class="btn ghost" data-pm="s">Continue shopping</button></div>`)}
 function showPayIssue(err,payId){pmOpen('',`<div class="pm-ic bad"><svg viewBox="0 0 52 52" width="72" height="72" aria-hidden="true"><circle cx="26" cy="26" r="24" fill="none" stroke="currentColor" stroke-width="3"/><path d="M17 17l18 18M35 17L17 35" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round"/></svg></div><h2>Payment received, order not confirmed yet</h2><p>Your payment (ID: <b>${esc(payId||'')}</b>) went through, but we could not save your order${err?': '+esc(err):''}.<br>Please do not pay again. Contact support with this payment ID.</p><div class="pm-btns"><button class="btn" data-pm="c">Contact support</button><button class="btn ghost" data-pm="x">Close</button></div>`)}
-document.addEventListener('click',e=>{const b=e.target.closest('[data-pm]');if(!b)return;const m=document.getElementById('pmodal'),id=m?m.dataset.id:'',k=b.dataset.pm;pmClose();if(k=='o')location.hash='#/orders/'+id;else if(k=='s')location.hash='#/shop';else if(k=='c')location.hash='#/support';else location.hash='#/orders'});
+document.addEventListener('click',e=>{const b=e.target.closest('[data-pm]');if(!b)return;const m=document.getElementById('pmodal'),id=m?m.dataset.id:'',k=b.dataset.pm;pmClose();if(k=='o')go('#/orders/'+id);else if(k=='s')go('#/shop');else if(k=='c')go('#/support');else go('#/orders')});
 async function payAndPlace(f,items,total,btn){
  const done=()=>{if(btn)btn.disabled=false};
  if(!sb||!USER){done();return toast('Please login to pay online')}
@@ -768,7 +775,7 @@ document.addEventListener('submit',async e=>{
   if(error){btn.disabled=false;return toast(error.message)}
   const m=await sb.from('support_messages').insert({ticket_id:data.id,sender:'customer',body:f.msg.trim()});
   if(m.error){btn.disabled=false;return toast(m.error.message)}
-  TK.unshift(data);TKM[data.id]=[{sender:'customer',body:f.msg.trim(),created_at:new Date().toISOString()}];toast('Request sent');location.hash='#/support/'+data.id}
+  TK.unshift(data);TKM[data.id]=[{sender:'customer',body:f.msg.trim(),created_at:new Date().toISOString()}];toast('Request sent');go('#/support/'+data.id)}
  else if(e.target.id=='trf'){e.preventDefault();const id=+e.target.dataset.tid,body=new FormData(e.target).get('msg').trim(),btn=e.target.querySelector('button');if(!body)return;btn.disabled=true;
   const r=await sb.from('support_messages').insert({ticket_id:id,sender:'customer',body});if(r.error){btn.disabled=false;return toast(r.error.message)}
   await loadThread(id);await loadTickets();toast('Reply sent');route(1)}
