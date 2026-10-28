@@ -365,7 +365,7 @@ let PRODUCTS=[
  {id:7,name:'Coastline Jute Tote',cat:'Jute',price:999,bg:'#7fb0cf',cols:['#c9a06d','#3b6f8f','#efe3c9'],desc:'Jute body with a cotton stripe band and a wide, comfy shoulder strap.'},
  {id:8,name:'Charcoal Studio Tote',cat:'Denim',price:1299,bg:'#9ea3a8',cols:['#3a3d42','#7a6a56','#c7c9cc'],desc:'Waxed canvas with leather-look handles. Made for work days.'}
 ];
-const SIZES={S:['Small','30 × 32 cm',0],M:['Medium','38 × 40 cm',100],L:['Large','45 × 46 cm',200]};
+const SIZES={S:['Small','30 × 32 cm',0],M:['Medium','38 × 40 cm',0],L:['Large','45 × 46 cm',0]};
 const $=s=>document.querySelector(s),app=$('#app');
 const inr=n=>'₹'+n.toLocaleString('en-IN');
 const ld=(k,d)=>{try{return JSON.parse(localStorage.getItem(k))||d}catch(e){return d}};
@@ -419,7 +419,7 @@ const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&g
 let REV=[],rate=0;
 const stars=n=>{n=Math.round(n);return '★★★★★'.slice(0,n)+'☆☆☆☆☆'.slice(0,5-n)};
 const TRUCK='<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M1 6h13v10H1zM14 10h4l3 3v3h-7z"/><circle cx="6" cy="18" r="2"/><circle cx="17" cy="18" r="2"/></svg>';
-function dlv(p){const v=String(DD[p.id]||ST.default_delivery_days||'').trim(),m=v.match(/^(\d{1,2})(?:-(\d{1,2}))?$/);if(!m)return '';const a=+m[1],b=+(m[2]===undefined?m[1]:m[2]);if(!a||b<a)return '';const f=n=>new Date(Date.now()+n*864e5).toLocaleDateString('en-IN',{day:'numeric',month:'short'});return `<div class="dlv">${TRUCK}<span>Estimated delivery: <b>${a==b?a+(a==1?' day':' days'):a+'–'+b+' days'}</b></span><small>Expected by ${a==b?f(a):f(a)+' – '+f(b)}</small></div>`}
+function dlv(p){const v=String(DD[p.id]||ST.default_delivery_days||'').trim();if(/^(none|off)$/i.test(v))return '';const m=v.match(/^(\d{1,2})(?:-(\d{1,2}))?$/);if(!m)return '';const a=+m[1],b=+(m[2]===undefined?m[1]:m[2]);if(!a||b<a)return '';const f=n=>new Date(Date.now()+n*864e5).toLocaleDateString('en-IN',{day:'numeric',month:'short'});return `<div class="dlv">${TRUCK}<span>Estimated delivery: <b>${a==b?a+(a==1?' day':' days'):a+'–'+b+' days'}</b></span><small>Expected by ${a==b?f(a):f(a)+' – '+f(b)}</small></div>`}
 const rt=(id,big)=>{const r=REV.filter(x=>x.product_id==id);if(!r.length)return big?'<div class="rt big"><small>No reviews yet</small></div>':'<div class="rt none"><span>☆☆☆☆☆</span> <small>No reviews yet</small></div>';const a=r.reduce((t,x)=>t+x.rating,0)/r.length;return `<div class="rt ${big?'big':''}"><span>${stars(a)}</span> ${a.toFixed(1)} <small>(${r.length})</small></div>`};
 const shareUrl=()=>location.origin+'/p/'+pid();
 function revBox(p){const r=REV.filter(x=>x.product_id==p.id);
